@@ -1,0 +1,1506 @@
+<title>Prompt-Schmiede V.14</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Figtree:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: helle Glas-Werkbank – Stationen links, Fragekarten rechts, Varianten-Generator am Ende */
+:root{
+  color-scheme:light;
+  --bg:#eef2fb; --ink:#141a33; --muted:#5b6485; --line:rgba(255,255,255,.85); --edge:rgba(30,40,90,.10);
+  --glass:rgba(255,255,255,.55); --glass-strong:rgba(255,255,255,.78); --glass-soft:rgba(255,255,255,.38);
+  --accent:#2446ff; --accent-ink:#ffffff; --accent-soft:rgba(36,70,255,.12);
+  --coral:#ff6a3d; --coral-soft:rgba(255,106,61,.14); --ok:#14946a;
+  --blob-a:#9ed7ff; --blob-b:#ffc6b3; --blob-c:#c9b8ff; --blob-d:#b7f0dc;
+  --f-display:"Sora","Segoe UI",system-ui,sans-serif;
+  --f-body:"Figtree","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  --r:20px;
+}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;min-height:100vh;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 56px;position:relative;overflow-x:hidden}
+.sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.sky i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.75}
+.sky i:nth-child(1){width:46vmax;height:46vmax;background:var(--blob-a);left:-12vmax;top:-14vmax;animation:drift 26s ease-in-out infinite alternate}
+.sky i:nth-child(2){width:38vmax;height:38vmax;background:var(--blob-b);right:-10vmax;top:6vmax;animation:drift 32s ease-in-out infinite alternate-reverse}
+.sky i:nth-child(3){width:40vmax;height:40vmax;background:var(--blob-c);left:20vmax;bottom:-18vmax;animation:drift 38s ease-in-out infinite alternate}
+.sky i:nth-child(4){width:26vmax;height:26vmax;background:var(--blob-d);right:12vmax;bottom:4vmax;animation:drift 22s ease-in-out infinite alternate-reverse}
+@keyframes drift{to{transform:translate(6vmax,4vmax) scale(1.08)}}
+.wrap{position:relative;z-index:1;max-width:1220px;margin:0 auto}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.glass{background:var(--glass);-webkit-backdrop-filter:blur(22px) saturate(160%);backdrop-filter:blur(22px) saturate(160%);border:1px solid var(--line);box-shadow:0 10px 40px -12px rgba(30,40,110,.18),inset 0 1px 0 rgba(255,255,255,.9)}
+
+header.top{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:18px;padding-block:30px 22px}
+.brand h1{font-family:var(--f-display);font-weight:800;font-size:clamp(2.1rem,5.4vw,3.6rem);line-height:1;margin:0;letter-spacing:-.035em;text-wrap:balance}
+.brand h1 em{font-style:normal;background:linear-gradient(100deg,var(--accent),var(--coral));-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand p{margin:10px 0 0;color:var(--muted);max-width:60ch}
+.meter{border-radius:16px;padding:12px 16px;min-width:230px;flex:0 1 320px}
+.meter .lbl{display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted);margin-bottom:8px;font-variant-numeric:tabular-nums}
+.meter .bar{height:8px;border-radius:99px;background:rgba(20,26,51,.08);overflow:hidden}
+.meter .fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--coral));transition:width .35s}
+.banner{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;border-radius:16px;padding:12px 16px;margin-bottom:22px}
+.banner p{margin:0}
+
+.grid{display:grid;grid-template-columns:250px minmax(0,1fr);gap:28px;align-items:start}
+nav.stations{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);display:flex;flex-direction:column;gap:3px;border-radius:var(--r);padding:10px}
+.station{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-radius:12px;padding:8px 10px;cursor:pointer;color:var(--muted)}
+.station:hover{background:var(--glass-soft);color:var(--ink)}
+.station[aria-current="step"]{background:var(--glass-strong);color:var(--ink);box-shadow:0 2px 10px -4px rgba(30,40,110,.25)}
+.station .no{font-family:var(--f-mono);font-size:.72rem;width:26px;height:26px;display:grid;place-items:center;border-radius:8px;background:rgba(20,26,51,.06);flex:none}
+.station[aria-current="step"] .no{background:var(--accent);color:var(--accent-ink)}
+.station .nm{flex:1;font-weight:700;font-size:.95rem;min-width:0}
+.station .ct{font-family:var(--f-mono);font-size:.7rem;font-variant-numeric:tabular-nums}
+.station.done .ct{color:var(--ok)}
+.station.special .no{background:var(--coral);color:#fff}
+
+.sec-head{margin-bottom:18px}
+.eyebrow{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--coral)}
+.sec-head h2{font-family:var(--f-display);font-weight:700;font-size:clamp(1.6rem,3.4vw,2.3rem);margin:4px 0 6px;letter-spacing:-.025em;text-wrap:balance}
+.sec-head p{margin:0;color:var(--muted);max-width:64ch}
+.group-title{font-family:var(--f-display);font-weight:600;font-size:1.05rem;margin:22px 0 4px;color:var(--muted)}
+
+.qs{display:flex;flex-direction:column;gap:14px}
+.q{border-radius:var(--r);padding:18px 20px;min-width:0;transition:box-shadow .2s}
+.q.filled{box-shadow:0 10px 40px -12px rgba(36,70,255,.25),inset 0 0 0 1.5px rgba(36,70,255,.28)}
+.ql{display:block;font-weight:700;font-size:1.03rem;margin-bottom:4px}
+.hint{color:var(--muted);font-size:.9rem;margin:0 0 10px}
+.multi-note{font-family:var(--f-mono);font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.chip{border:1px solid var(--line);background:var(--glass-soft);border-radius:99px;padding:7px 14px;cursor:pointer;font-size:.92rem;transition:background .15s,transform .15s,box-shadow .15s}
+.chip:hover{background:var(--glass-strong);transform:translateY(-1px)}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);box-shadow:0 6px 18px -6px rgba(36,70,255,.6)}
+input[type=text],input[type=number],textarea{width:100%;background:var(--glass-strong);border:1px solid var(--edge);border-radius:12px;padding:10px 12px}
+textarea{min-height:96px;resize:vertical}
+::placeholder{color:#8a92b0}
+.own{position:relative}
+.own input{padding-left:34px}
+.own::before{content:"✎";position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.9rem}
+.range-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.range-row input{flex:1;min-width:180px;accent-color:var(--accent)}
+.range-row output{font-family:var(--f-mono);font-weight:600;min-width:7ch;color:var(--coral)}
+.ticks{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-top:4px;gap:4px}
+.empty{border-radius:var(--r);padding:22px}
+
+.models{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.model{text-align:left;border:1.5px solid var(--line);background:var(--glass-soft);border-radius:16px;padding:16px;cursor:pointer;display:flex;flex-direction:column;gap:6px}
+.model:hover{background:var(--glass-strong)}
+.model[aria-checked="true"]{border-color:var(--accent);background:var(--glass-strong);box-shadow:0 0 0 3px var(--accent-soft)}
+.model .mn{font-family:var(--f-display);font-weight:700;font-size:1.25rem}
+.tag{align-self:flex-start;font-family:var(--f-mono);font-size:.68rem;padding:3px 8px;border-radius:6px;background:rgba(20,26,51,.06)}
+.tag.cost{background:var(--coral-soft);color:#c2421c}
+.tag.free{color:var(--ok);background:rgba(20,148,106,.1)}
+.model .md{color:var(--muted);font-size:.9rem}
+.dots{display:flex;gap:4px;align-items:center;font-size:.8rem;color:var(--muted)}
+.dots i{width:9px;height:9px;border-radius:50%;background:rgba(20,26,51,.1);display:inline-block}
+.dots i.on{background:var(--accent)}
+
+.pager{display:flex;justify-content:space-between;gap:12px;margin-top:22px;flex-wrap:wrap}
+.btn{border:1px solid transparent;border-radius:12px;padding:10px 18px;font-weight:700;cursor:pointer;background:var(--glass-strong);color:var(--ink)}
+.btn:hover{filter:brightness(.98)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);box-shadow:0 8px 20px -8px rgba(36,70,255,.7)}
+.btn.coral{background:var(--coral);color:#fff;box-shadow:0 8px 20px -8px rgba(255,106,61,.7)}
+.btn.ghost{background:var(--glass-soft);border-color:var(--line)}
+.btn.small{padding:7px 12px;font-size:.88rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+.toolbar{border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:12px;margin-bottom:18px}
+.toolbar .big{font-family:var(--f-display);font-weight:800;font-size:clamp(1.4rem,3vw,2rem);letter-spacing:-.02em}
+.toolbar .big span{color:var(--accent)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row input[type=number]{width:200px}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{font-family:var(--f-mono);font-size:.72rem;padding:4px 9px;border-radius:99px;background:var(--glass-strong);border:1px solid var(--line)}
+
+.out{display:flex;flex-direction:column;gap:18px}
+.variant{border-radius:var(--r);overflow:hidden;min-width:0}
+.vh{display:flex;flex-wrap:wrap;gap:10px;align-items:start;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--edge)}
+.vh h3{margin:0;font-family:var(--f-display);font-size:1.12rem;font-variant-numeric:tabular-nums}
+.vh .why{margin:4px 0 0;color:var(--muted);font-size:.86rem}
+.vh .meta{font-family:var(--f-mono);font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.vh .facts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.best{font-family:var(--f-mono);font-size:.68rem;background:var(--coral);color:#fff;padding:3px 8px;border-radius:6px;margin-left:8px;vertical-align:middle}
+.variant pre{margin:0;padding:18px;font-family:var(--f-mono);font-size:.8rem;line-height:1.6;white-space:pre-wrap;word-break:break-word;max-height:480px;overflow:auto;background:rgba(255,255,255,.45)}
+.usage{padding:14px 18px;border-top:1px solid var(--edge);display:flex;flex-direction:column;gap:10px}
+.usage h4{margin:0;font-family:var(--f-display);font-size:.95rem}
+.urow{display:grid;grid-template-columns:150px 1fr auto;gap:10px;align-items:center;font-size:.88rem}
+.ubar{height:8px;border-radius:99px;background:rgba(20,26,51,.08);overflow:hidden}
+.ubar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--coral))}
+.urow b{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:.8rem}
+.unote{margin:0;color:var(--muted);font-size:.78rem}
+@media (max-width:560px){.urow{grid-template-columns:minmax(0,1fr)}}
+.buildcode{margin:0;padding:14px;font-family:var(--f-mono);font-size:.78rem;line-height:1.55;white-space:pre-wrap;word-break:break-word;max-height:420px;overflow:auto;background:rgba(255,255,255,.45);border-radius:12px;border:1px solid var(--edge)}
+.prevframe{width:100%;height:70vh;min-height:360px;border:1px solid var(--edge);border-radius:12px;background:#fff}
+.intro{position:fixed;inset:0;z-index:100;background:radial-gradient(120% 90% at 50% 20%,#f7f9ff 0%,#e6ecff 55%,#dce4fb 100%);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 max(16px,env(safe-area-inset-left,0px)) calc(env(safe-area-inset-bottom,0px) + 32px);transition:opacity .6s ease,transform .6s ease;overflow:hidden}
+.intro.done{opacity:0;transform:scale(1.05);pointer-events:none}
+#introCanvas{position:absolute;inset:0;width:100%;height:100%}
+.intro-ui{position:relative;width:min(420px,100%);display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.intro-name{font-family:var(--f-display);font-weight:800;font-size:clamp(1.9rem,7vw,2.7rem);letter-spacing:-.03em;line-height:1}
+.intro-name em{font-style:normal;background:linear-gradient(100deg,var(--accent),var(--coral));-webkit-background-clip:text;background-clip:text;color:transparent}
+.intro-sub{margin:0;color:var(--muted);font-size:.95rem;text-wrap:balance}
+.intro-bar{width:100%;height:8px;border-radius:99px;background:rgba(20,26,51,.1);overflow:hidden;margin-top:6px}
+.intro-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--coral))}
+.intro-meta{display:flex;justify-content:space-between;width:100%;font-family:var(--f-mono);font-size:.75rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.orb{position:absolute;left:50%;top:36%;width:130px;height:130px;margin:-65px 0 0 -65px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,var(--coral) 60%,var(--accent));filter:blur(2px);animation:orbpulse 1.4s ease-in-out infinite}
+@keyframes orbpulse{50%{transform:scale(1.15)}}
+.how{border-radius:var(--r);padding:16px 20px;margin-bottom:14px}
+.how summary{cursor:pointer;font-family:var(--f-display);font-weight:700}
+.how ol{margin:10px 0 0;padding-left:22px;color:var(--muted)}
+.how li{margin:5px 0}
+.cmp{margin-top:18px}
+.cmpwrap{display:flex;flex-direction:column;gap:10px}
+.cmpwrap h4{margin:0;font-family:var(--f-display);font-size:1rem}
+.tblscroll{overflow-x:auto}
+table.mt{width:100%;border-collapse:collapse;font-size:.88rem;min-width:640px}
+.mt th,.mt td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--edge);vertical-align:top}
+.mt th{font-family:var(--f-mono);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.mt td b{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:600}
+.mt tr.sel td{background:var(--accent-soft)}
+.mt .rec{font-family:var(--f-mono);font-size:.64rem;background:var(--coral);color:#fff;padding:2px 7px;border-radius:6px;margin-left:6px}
+.mt small{display:block;color:var(--muted);font-size:.74rem;font-weight:400}
+.ai-box{border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:10px;border:1.5px dashed rgba(36,70,255,.45)}
+.ai-box h3{margin:0;font-family:var(--f-display)}
+.ai-box p{margin:0;color:var(--muted)}
+.status{font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+.warn{color:#c2421c!important}
+.tips{border-radius:var(--r);padding:16px 18px}
+.tips h3{margin:0 0 6px;font-family:var(--f-display);font-size:1.05rem}
+.tips ul{margin:0;padding-left:20px;color:var(--muted)}
+
+@media (max-width:860px){
+  .grid{grid-template-columns:minmax(0,1fr);gap:16px}
+  nav.stations{position:static;flex-direction:row;overflow-x:auto;gap:6px;padding:8px}
+  .station{width:auto;flex:none;padding:7px 10px}
+  .station .ct{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.ver{position:fixed;right:8px;bottom:4px;font-size:10px;color:#9aa0a6;opacity:.7;pointer-events:none;z-index:50}
+details.gl{margin-top:10px;font-size:.92rem;color:var(--muted)}
+details.gl summary{cursor:pointer;color:var(--accent);font-weight:600}
+details.gl p{margin:8px 0 0;line-height:1.5}
+</style>
+
+<div class="intro" id="intro" role="status" aria-live="polite">
+  <canvas id="introCanvas" aria-hidden="true"></canvas>
+  <div class="orb" id="introOrb" hidden></div>
+  <div class="intro-ui">
+    <div class="intro-name">Prompt-<em>Schmiede</em></div>
+    <p class="intro-sub">Fragen beantworten, Prompt bekommen, Claude direkt bauen lassen.</p>
+    <div class="intro-bar"><i id="introFill"></i></div>
+    <div class="intro-meta"><span id="introPct">0 %</span><span id="introMsg">Ofen wird angeheizt …</span></div>
+    <button class="btn ghost small" id="introSkip" type="button">Überspringen</button>
+  </div>
+</div>
+<div class="sky" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Prompt-<em>Schmiede</em></h1>
+      <p>Beantworte die Fragen, schreib in deinen eigenen Worten dazu und wähl dein Claude-Modell. Daraus baut der Generator Prompts für deine Website, App, dein Dashboard oder Spiel, mit Millionen möglichen Varianten.</p>
+    </div>
+    <div class="meter glass" aria-live="polite">
+      <div class="lbl"><span>Beantwortet</span><span id="meterTxt">0 / 0</span></div>
+      <div class="bar"><div class="fill" id="meterFill"></div></div>
+    </div>
+  </header>
+  <div class="row" style="justify-content:flex-end;margin:0 0 14px"><button class="btn ghost small" id="resetBtn" type="button">Alles neu beginnen</button></div>
+  <div class="banner glass" id="exampleBanner" hidden>
+    <p><strong>Beispiel ausgefüllt:</strong> die Web-App „Resellerforless“. Ändere, was du willst, oder fang leer an.</p>
+    <button class="btn ghost small" id="clearBtn" type="button">Alles leeren</button>
+  </div>
+  <div class="grid">
+    <nav class="stations glass" id="stations" aria-label="Abschnitte"></nav>
+    <main id="main"></main>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+<script>
+/* ================= Projektarten ================= */
+const TYPES = [
+  {k:"web", l:"Website", art:"eine"}, {k:"landing", l:"Landingpage", art:"eine"}, {k:"shop", l:"Online-Shop", art:"einen"},
+  {k:"portfolio", l:"Portfolio", art:"ein"}, {k:"blog", l:"Blog / Magazin", art:"einen"}, {k:"event", l:"Event-Seite", art:"eine"},
+  {k:"webapp", l:"Web-App / Tool", art:"eine"}, {k:"app", l:"Handy-App", art:"eine"}, {k:"dashboard", l:"Dashboard", art:"ein"},
+  {k:"game", l:"Browser-Spiel", art:"ein"}
+];
+const SITE = ["web","landing","shop","portfolio","blog","event"];
+const VIS = [...SITE,"webapp"];
+const BROWSER = [...SITE,"webapp","dashboard","game"];
+
+/* ================= Abschnitte ================= */
+const SECTIONS = [
+  {id:"start", name:"Start", title:"Was baust du?", sub:"Wähl zuerst die Projektart. Danach passen sich die Fragen an."},
+  {id:"projekt", name:"Projekt", title:"Worum geht's?", sub:"Ziel, Zielgruppe und Tonalität."},
+  {id:"aufbau", name:"Aufbau", title:"Aufbau", sub:"Fragen speziell für deine Projektart."},
+  {id:"inhalt", name:"Inhalt", title:"Was kommt rein?", sub:"Inhalte, Texte und Funktionen."},
+  {id:"design", name:"Design", title:"Wie soll es aussehen?", sub:"Stil, Farben, Formen, Schrift und Details."},
+  {id:"animation", name:"Animation & 3D", title:"Wie viel Bewegung?", sub:"Animationen, 3D, Licht, Kamera und Interaktion."},
+  {id:"technik", name:"Technik", title:"Womit wird gebaut?", sub:"Unsicher? Lass es leer, dann entscheidet Claude."},
+  {id:"ausgabe", name:"Ausgabe", title:"Wie soll Claude antworten?", sub:"Spart später Korrekturrunden und damit Limit oder Guthaben."},
+  {id:"eigene", name:"Eigene Worte", title:"Deine eigenen Worte", sub:"Alles, was die Fragen nicht abdecken. Wird so in den Prompt übernommen."},
+  {id:"modell", name:"Modell", title:"Welches Claude-Modell?", sub:"Der Prompt wird darauf zugeschnitten."},
+  {id:"einstellungen", name:"Einstellungen", title:"Generator-Einstellungen", sub:"Wie die Prompts gebaut werden: Länge, Format, Kreativität und wie viele Varianten.", special:true},
+  {id:"ergebnis", name:"Ergebnis", title:"Deine Prompts", sub:"Kopieren, in einen neuen Chat mit dem gewählten Modell einfügen, fertig.", special:true}
+];
+
+/* ================= Fragen ================= */
+const COLORS = ["Weiß","Schwarz","Grau","Blau","Hellblau","Türkis","Grün","Mint","Gelb","Orange","Rot","Pink","Lila","Beige","Gold","Silber"];
+const Q = [
+  // START
+  {s:"start", id:"typ", label:"Was willst du bauen?", type:"single", opts:TYPES.map(t=>t.l)},
+  {s:"start", id:"name", label:"Name des Projekts", type:"text", ph:"z. B. Resellerforless", p:"Name"},
+  {s:"start", id:"pitch", label:"Deine Idee in einem Satz", type:"text", ph:"Was ist es, in einem Satz?", p:"Kurz gesagt"},
+  {s:"start", id:"idee", label:"Beschreib deine Idee ausführlich in eigenen Worten", type:"textarea", hint:"Was ist es, wer seid ihr, was soll passieren, warum gibt es das?", ph:"Wir sind …, wir wollen …", p:"Idee"},
+
+  // PROJEKT
+  {s:"projekt", id:"ziel", label:"Was soll das Projekt erreichen?", type:"multi", own:true, p:"Ziel", opts:["Verkaufen","Anfragen bekommen","Infos zeigen","Marke aufbauen","Community aufbauen","Unterhalten","Arbeiten zeigen","Termine buchen","Werkzeug zum Benutzen","Daten überblicken"]},
+  {s:"projekt", id:"zielgruppe", label:"Wer ist die Zielgruppe?", type:"multi", own:true, p:"Zielgruppe", opts:["Kinder","Jugendliche","Junge Erwachsene","Erwachsene","Senioren","Firmen","Gamer","Sammler","Sneaker-Fans","Kreative","Eltern","Profis"]},
+  {s:"projekt", id:"nutzer_wissen", label:"Wie technikfit ist die Zielgruppe?", type:"single", p:"Technikwissen der Nutzer", opts:["Kaum","Normal","Sehr fit"]},
+  {s:"projekt", id:"branche", label:"Branche oder Thema", type:"text", ph:"z. B. Reselling, Fitness, Musik", p:"Branche/Thema"},
+  {s:"projekt", id:"ort", label:"Ort oder Region (falls wichtig)", type:"text", ph:"z. B. Forchtenberg, Hohenlohe", p:"Ort/Region"},
+  {s:"projekt", id:"usp", label:"Was macht euch besonders?", type:"textarea", ph:"Warum ausgerechnet ihr?", p:"Was uns besonders macht"},
+  {s:"projekt", id:"konkurrenz", label:"Wer macht schon so etwas Ähnliches?", type:"text", ph:"Namen oder Beschreibung", p:"Ähnliche Angebote"},
+  {s:"projekt", id:"erfolg", label:"Woran merkst du, dass es funktioniert?", type:"text", ph:"z. B. viele Anfragen, Leute nutzen es täglich", p:"Erfolg heißt"},
+  {s:"projekt", id:"ton", label:"Wie soll es klingen?", type:"single", own:true, p:"Tonalität", opts:["Locker & frech","Freundlich","Seriös","Luxuriös","Witzig","Technisch & nüchtern","Motivierend","Geheimnisvoll"]},
+  {s:"projekt", id:"sprache", label:"Sprache der Texte", type:"single", own:true, p:"Sprache", opts:["Deutsch","Englisch","Deutsch + Englisch umschaltbar"]},
+  {s:"projekt", id:"anrede", label:"Du oder Sie?", type:"single", p:"Anrede", opts:["Du","Sie","Ihr"]},
+
+  // AUFBAU – Websites allgemein
+  {s:"aufbau", id:"hero", for:SITE, label:"Wie soll der Startbereich (Hero) aussehen?", type:"single", own:true, p:"Startbereich", opts:["Riesige Überschrift","Vollbild-3D-Szene","Video-Hintergrund","Großes Produktbild","Text links, Bild rechts","Animierter Verlauf","Interaktives Element"]},
+  {s:"aufbau", id:"hero_hoehe", for:SITE, label:"Wie hoch ist der Startbereich?", type:"single", p:"Höhe Startbereich", opts:["Ganzer Bildschirm","Etwa halber Bildschirm","So hoch wie der Inhalt"]},
+  {s:"aufbau", id:"nav", for:VIS, label:"Navigation", type:"single", own:true, p:"Navigation", opts:["Oben fixiert","Verschwindet beim Runterscrollen","Schwebende Pille (Glas)","Seitenleiste","Vollbild-Menü","Unten wie bei einer App"]},
+  {s:"aufbau", id:"mobilmenu", for:VIS, label:"Menü auf dem Handy", type:"single", p:"Handy-Menü", opts:["Burger-Icon mit Vollbild-Menü","Seitliche Schublade","Leiste unten","Egal"]},
+  {s:"aufbau", id:"footer", for:SITE, label:"Footer (ganz unten)", type:"single", own:true, p:"Footer", opts:["Minimal","Groß mit riesigem Markennamen","Mit Newsletter","Mit Sitemap und Links"]},
+  {s:"aufbau", id:"vertrauen", for:["web","landing","shop","event"], label:"Was schafft Vertrauen?", type:"multi", own:true, p:"Vertrauens-Elemente", opts:["Zahlen & Fakten","Ablauf erklärt","Garantie / Rückgabe","Team-Fotos","Partner-Logos (Platzhalter)","FAQ","Echte Bewertungen (später einfügen)"]},
+  // Landing
+  {s:"aufbau", id:"conversion", for:["landing"], label:"Was soll der Besucher am Ende tun?", type:"single", own:true, p:"Haupt-Aktion", opts:["Kaufen","E-Mail eintragen","App herunterladen","Termin buchen","Anrufen / schreiben"]},
+  {s:"aufbau", id:"preise", for:["landing","web"], label:"Preise zeigen?", type:"single", p:"Preisdarstellung", opts:["Keine Preise","Ein Preis","3 Pakete nebeneinander","Vergleichstabelle"]},
+  // Shop
+  {s:"aufbau", id:"shop_anzahl", for:["shop"], label:"Wie viele Produkte ungefähr?", type:"single", p:"Produktanzahl", opts:["1–10","10–50","Mehr als 50"]},
+  {s:"aufbau", id:"shop_kat", for:["shop"], label:"Welche Kategorien?", type:"text", ph:"z. B. Sneaker, Technik, Kleidung", p:"Kategorien"},
+  {s:"aufbau", id:"shop_karte", for:["shop"], label:"Was zeigt eine Produktkarte?", type:"multi", own:true, p:"Produktkarte", opts:["Bild","Preis","Alter Preis","Zustand","Badge (Neu/Sale)","Schnellansicht","Varianten/Größen","Abholung/Versand"]},
+  {s:"aufbau", id:"shop_detail", for:["shop"], label:"Was gehört auf die Produktseite?", type:"multi", own:true, p:"Produktseite", opts:["Bildergalerie","Zoom","3D-/360°-Ansicht","Größen/Varianten","Ausführliche Beschreibung","Versand-Info","Ähnliche Produkte"]},
+  {s:"aufbau", id:"shop_warenkorb", for:["shop"], label:"Warenkorb", type:"single", p:"Warenkorb", opts:["Seitliche Schublade","Eigene Seite","Kleines Popup","Kein Warenkorb, nur Anfrage"]},
+  {s:"aufbau", id:"shop_bezahlung", for:["shop"], label:"Bezahlung", type:"single", own:true, p:"Bezahlung", opts:["Nur Platzhalter","PayPal-Button (Platzhalter)","Stripe","Anfrage per Nachricht","Barzahlung bei Abholung"]},
+  {s:"aufbau", id:"shop_filter", for:["shop"], label:"Filter und Sortierung", type:"multi", p:"Filter", opts:["Kategorie","Preis","Zustand","Größe","Farbe","Sortieren nach Preis","Sortieren nach Neu"]},
+  {s:"aufbau", id:"shop_extras", for:["shop"], label:"Extras", type:"multi", own:true, p:"Shop-Extras", opts:["Wunschliste","Gutscheinfeld","Lagerbestand","Zuletzt angesehen","Abholung oder Versand wählen"]},
+  // Portfolio
+  {s:"aufbau", id:"pf_art", for:["portfolio"], label:"Was zeigst du?", type:"multi", own:true, p:"Arbeiten", opts:["Design","Fotos","Videos","Code-Projekte","Kunst","Musik","3D"]},
+  {s:"aufbau", id:"pf_layout", for:["portfolio"], label:"Wie werden Projekte gezeigt?", type:"single", own:true, p:"Projekt-Darstellung", opts:["Raster","Liste mit Hover-Vorschau","Horizontaler Slider","Vollbild-Slides","3D-Galerie"]},
+  {s:"aufbau", id:"pf_detail", for:["portfolio"], label:"Projektseiten", type:"single", p:"Projektseiten", opts:["Nur Bilder","Kurze Beschreibung","Ausführliche Case Study"]},
+  {s:"aufbau", id:"pf_extra", for:["portfolio"], label:"Was noch?", type:"multi", p:"Portfolio-Extras", opts:["Lebenslauf","Skills","Kunden","Auszeichnungen","Kontakt-Aufruf"]},
+  // Blog
+  {s:"aufbau", id:"blog_layout", for:["blog"], label:"Startseite", type:"single", p:"Blog-Startseite", opts:["Neueste Artikel oben","Magazin-Raster","Großer Hauptartikel + Liste"]},
+  {s:"aufbau", id:"blog_artikel", for:["blog"], label:"Artikel-Features", type:"multi", p:"Artikel-Features", opts:["Lesezeit","Lese-Fortschrittsbalken","Inhaltsverzeichnis","Teilen-Buttons","Autor-Box","Ähnliche Artikel"]},
+  {s:"aufbau", id:"blog_kat", for:["blog"], label:"Kategorien oder Tags", type:"text", ph:"z. B. News, Tutorials, Reviews", p:"Kategorien"},
+  {s:"aufbau", id:"blog_extra", for:["blog"], label:"Extras", type:"multi", p:"Blog-Extras", opts:["Suche","Newsletter","Kommentare (Platzhalter)","RSS"]},
+  // Event
+  {s:"aufbau", id:"ev_datum", for:["event"], label:"Datum und Uhrzeit", type:"text", ph:"z. B. 12.12.2026, 19 Uhr", p:"Datum"},
+  {s:"aufbau", id:"ev_ort", for:["event"], label:"Veranstaltungsort", type:"text", ph:"z. B. Stadthalle Öhringen", p:"Ort"},
+  {s:"aufbau", id:"ev_teile", for:["event"], label:"Was gehört auf die Seite?", type:"multi", p:"Event-Bereiche", opts:["Countdown","Programm / Zeitplan","Line-up / Sprecher","Tickets","Anfahrt","Galerie","FAQ"]},
+  {s:"aufbau", id:"ev_ticket", for:["event"], label:"Tickets", type:"single", p:"Tickets", opts:["Link zu externem Shop","Anmeldeformular","Nur Infos"]},
+  // Web-App
+  {s:"aufbau", id:"wa_funktion", for:["webapp"], label:"Hauptfunktion in einem Satz", type:"text", ph:"Was macht das Tool?", p:"Hauptfunktion"},
+  {s:"aufbau", id:"wa_ablauf", for:["webapp"], label:"Was macht der Nutzer nacheinander?", type:"textarea", ph:"1. …\n2. …\n3. …", p:"Ablauf für Nutzer"},
+  {s:"aufbau", id:"wa_screens", for:["webapp"], label:"Welche Ansichten gibt es?", type:"multi", own:true, p:"Ansichten", opts:["Start","Eingabe / Upload","Ergebnis","Verlauf","Einstellungen","Profil","Hilfe"]},
+  {s:"aufbau", id:"wa_eingabe", for:["webapp"], label:"Wie gibt der Nutzer etwas ein?", type:"multi", own:true, p:"Eingaben", opts:["Text","Foto-Upload","Kamera","Datei","Formular mit Fragen","Sprache","Auswahl-Karten"]},
+  {s:"aufbau", id:"wa_ausgabe", for:["webapp"], label:"Wie wird das Ergebnis gezeigt?", type:"multi", own:true, p:"Ergebnis-Darstellung", opts:["Karte","Liste","Text zum Kopieren","Diagramm","Download"]},
+  {s:"aufbau", id:"wa_ki", for:["webapp"], label:"Nutzt das Tool KI?", type:"single", p:"KI", opts:["Nein","Ja – Claude API","Ja – andere KI","Weiß nicht"]},
+  {s:"aufbau", id:"wa_speichern", for:["webapp"], label:"Werden Daten gespeichert?", type:"single", p:"Speichern", opts:["Nein","Im Browser","In einer Datenbank","Mit Benutzerkonto"]},
+  {s:"aufbau", id:"wa_konto", for:["webapp"], label:"Login?", type:"single", p:"Login", opts:["Nein","E-Mail + Passwort","Google-Login","Magic Link"]},
+  {s:"aufbau", id:"wa_zustaende", for:["webapp","dashboard","app"], label:"Leer-, Lade- und Fehlerzustände extra gestalten?", type:"single", p:"Zustände gestalten", opts:["Ja","Egal"]},
+  // App
+  {s:"aufbau", id:"app_platform", for:["app"], label:"Für welche Handys?", type:"single", p:"Plattform", opts:["iPhone","Android","Beide"]},
+  {s:"aufbau", id:"app_nav", for:["app"], label:"Navigation", type:"single", own:true, p:"Navigation", opts:["Tab-Leiste unten","Seitenmenü","Weiter/Zurück (Stack)","Gesten"]},
+  {s:"aufbau", id:"app_screens", for:["app"], label:"Welche Screens?", type:"multi", own:true, p:"Screens", opts:["Onboarding","Login","Home / Feed","Suche","Detail","Profil","Einstellungen","Benachrichtigungen","Chat","Kamera"]},
+  {s:"aufbau", id:"app_features", for:["app"], label:"Funktionen", type:"multi", own:true, p:"App-Funktionen", opts:["Push-Nachrichten","Offline nutzbar","Kamera","Standort","Haptisches Feedback","Widgets","Dark Mode","Teilen"]},
+  {s:"aufbau", id:"app_onboarding", for:["app"], label:"Einführung beim ersten Start", type:"single", p:"Onboarding", opts:["Keine","3 Slides","Interaktiv zum Ausprobieren"]},
+  {s:"aufbau", id:"app_daten", for:["app"], label:"Wo liegen die Daten?", type:"single", own:true, p:"Daten", opts:["Nur auf dem Handy","Firebase","Supabase","Eigene API","Weiß nicht"]},
+  {s:"aufbau", id:"app_geld", for:["app"], label:"Wie verdient die App Geld?", type:"single", p:"Geldmodell", opts:["Gar nicht","Einmalkauf","Abo","Werbung","In-App-Käufe"]},
+  // Dashboard
+  {s:"aufbau", id:"db_zweck", for:["dashboard"], label:"Wofür ist das Dashboard?", type:"text", ph:"z. B. Verkäufe und Gewinn im Blick behalten", p:"Zweck"},
+  {s:"aufbau", id:"db_daten", for:["dashboard"], label:"Woher kommen die Daten?", type:"single", own:true, p:"Datenquelle", opts:["Beispieldaten","CSV-Upload","API","Google Sheets","Datenbank"]},
+  {s:"aufbau", id:"db_kpis", for:["dashboard"], label:"Welche Kennzahlen sind am wichtigsten?", type:"textarea", ph:"z. B. Umsatz, Gewinn pro Teil, verkaufte Teile", p:"Kennzahlen"},
+  {s:"aufbau", id:"db_charts", for:["dashboard"], label:"Welche Diagramme?", type:"multi", own:true, p:"Diagramme", opts:["Linie","Balken","Donut","Fläche","Heatmap","Tabelle","Karte","Sparklines","Trichter","Tacho"]},
+  {s:"aufbau", id:"db_filter", for:["dashboard"], label:"Filter", type:"multi", p:"Filter", opts:["Zeitraum","Kategorie","Suche","Vergleich mit Vorperiode"]},
+  {s:"aufbau", id:"db_layout", for:["dashboard"], label:"Aufbau", type:"single", own:true, p:"Dashboard-Aufbau", opts:["Kennzahlen-Leiste oben","Seitenleiste + Inhalt","Kachel-Raster","Tabs"]},
+  {s:"aufbau", id:"db_dichte", for:["dashboard"], label:"Wie dicht gepackt?", type:"single", p:"Dichte", opts:["Luftig","Normal","Kompakt"]},
+  {s:"aufbau", id:"db_live", for:["dashboard"], label:"Aktualisierung", type:"single", p:"Aktualisierung", opts:["Statisch","Per Knopfdruck","Live alle paar Sekunden"]},
+  {s:"aufbau", id:"db_tabelle", for:["dashboard"], label:"Tabellen-Funktionen", type:"multi", p:"Tabelle", opts:["Sortieren","Suchen","Seiten","CSV-Export","Zeile anklicken für Details"]},
+  {s:"aufbau", id:"db_nutzer", for:["dashboard"], label:"Wer nutzt es?", type:"single", p:"Nutzer", opts:["Nur ich","Ein Team","Verschiedene Rollen"]},
+  // Spiel
+  {s:"aufbau", id:"g_genre", for:["game"], label:"Genre", type:"single", own:true, p:"Genre", opts:["Jump'n'Run","Puzzle","Clicker","Shooter","Rennen","Quiz","Endless Runner","Arcade","Tower Defense"]},
+  {s:"aufbau", id:"g_ziel", for:["game"], label:"Was ist das Spielziel?", type:"textarea", p:"Spielziel"},
+  {s:"aufbau", id:"g_steuerung", for:["game"], label:"Steuerung", type:"multi", p:"Steuerung", opts:["Tastatur","Maus","Touch","Controller"]},
+  {s:"aufbau", id:"g_grafik", for:["game"], label:"Grafikstil", type:"single", own:true, p:"Grafik", opts:["Pixel-Art","Flach / Vektor","Low-Poly 3D","Neon","Handgezeichnet"]},
+  {s:"aufbau", id:"g_level", for:["game"], label:"Level", type:"single", p:"Level", opts:["Endlos","Feste Level","Zufällig generiert"]},
+  {s:"aufbau", id:"g_features", for:["game"], label:"Features", type:"multi", own:true, p:"Spiel-Features", opts:["Highscore","Leben","Power-ups","Bossgegner","Sound","Pause-Menü","Schwierigkeitsgrade","Bestenliste lokal"]},
+
+  // INHALT
+  {s:"inhalt", id:"seiten", for:SITE, label:"Welche Abschnitte oder Seiten?", type:"multi", own:true, p:"Abschnitte/Seiten (in dieser Reihenfolge)", opts:["Startbereich","Über uns","Produkte / Galerie","Leistungen","Preise","So funktioniert's","Team","Bewertungen","FAQ","Blog / News","Kontakt","Impressum & Datenschutz"]},
+  {s:"inhalt", id:"umfang", for:SITE, label:"Wie groß?", type:"single", own:true, p:"Umfang", opts:["One-Pager","2–5 Seiten","Mehr als 5 Seiten"]},
+  {s:"inhalt", id:"funktionen", for:VIS, label:"Welche Funktionen?", type:"multi", own:true, p:"Funktionen",
+    optsBy:{default:["Kontaktformular","Newsletter","Suche","Hell/Dunkel-Schalter","Mehrsprachig","Bilder-Zoom","Standort-Info","Chat-Button","Termin buchen","Cookie-Hinweis"],
+            webapp:["Kopieren-Button","Teilen-Link","Verlauf","Export","Hell/Dunkel-Schalter","Tastenkürzel","Mehrsprachig","Hilfe-Tooltips"]}},
+  {s:"inhalt", id:"material", label:"Hast du schon Texte und Bilder?", type:"single", p:"Texte & Bilder", opts:["Ja, alles da","Teilweise","Nein, bitte Platzhalter","Bitte passende Texte schreiben"]},
+  {s:"inhalt", id:"headline", not:["dashboard"], label:"Hauptüberschrift (falls schon vorhanden)", type:"text", ph:"z. B. Foto rein. Preis raus.", p:"Hauptüberschrift"},
+  {s:"inhalt", id:"cta", not:["dashboard","game"], label:"Wichtigster Button", type:"text", ph:"z. B. Jetzt starten", p:"Wichtigster Button"},
+  {s:"inhalt", id:"produkte", label:"Inhalte, die unbedingt vorkommen", type:"textarea", ph:"Produkte, Leistungen, Daten, Texte …", p:"Inhalte"},
+  {s:"inhalt", id:"social", not:["dashboard","game"], label:"Social-Media-Links", type:"multi", own:true, p:"Social-Media-Links", opts:["Instagram","TikTok","YouTube","eBay","Kleinanzeigen","Discord","WhatsApp","Snapchat","LinkedIn"]},
+  {s:"inhalt", id:"recht", for:SITE, label:"Rechtliches", type:"multi", p:"Rechtliches", opts:["Impressum (Platzhalter)","Datenschutz (Platzhalter)","Cookie-Banner"]},
+
+  // DESIGN
+  {s:"design", id:"stil", label:"Welcher Stil?", type:"multi", own:true, p:"Stil", opts:["Glas-Look","Minimalistisch","Streetwear","Luxus","Verspielt","Futuristisch","Retro / Y2K","Brutalistisch","Natur / organisch","Comic","Editorial / Magazin","Tech / Terminal"]},
+  {s:"design", id:"richtung", label:"Welche Designrichtung?", type:"single", bank:"DIRECTIONS", p:"Designrichtung"},
+  {s:"design", id:"fokus", label:"Was soll besonders gut werden?", type:"single", bank:"EMPH", p:"Fokus"},
+  {s:"design", id:"app_look", for:["app"], label:"Wie nah an Standard-Apps?", type:"single", p:"App-Look", opts:["Wie iOS","Wie Android (Material)","Komplett eigener Look"]},
+  {s:"design", id:"modus", label:"Hell oder dunkel?", type:"single", p:"Modus", opts:["Hell","Dunkel","Beides, umschaltbar"]},
+  {s:"design", id:"hauptfarbe", label:"Hauptfarben", type:"multi", own:true, ownPh:"Eigene Farben, z. B. #2446ff", p:"Hauptfarben", opts:COLORS},
+  {s:"design", id:"akzent", label:"Akzentfarbe (für Buttons und Highlights)", type:"single", own:true, p:"Akzentfarbe", opts:COLORS},
+  {s:"design", id:"harmonie", label:"Farb-Stimmung", type:"single", p:"Farb-Stimmung", opts:["Neutral + ein Akzent","Monochrom","Kontrastreich","Bunt","Pastell","Neon"]},
+  {s:"design", id:"hintergrund", label:"Hintergrund", type:"single", own:true, p:"Hintergrund", opts:["Einfarbig","Weicher Verlauf","Mesh-Verlauf","Animierter Verlauf","Muster / Textur","3D-Szene","Foto / Video"]},
+  {s:"design", id:"textur", label:"Oberflächen-Effekte", type:"multi", p:"Oberflächen", opts:["Glas-Blur","Körnung (Grain)","Glow","Feines Linienraster","Holografischer Schimmer","Keine"]},
+  {s:"design", id:"schrift", label:"Schrift-Charakter", type:"single", own:true, p:"Schrift", opts:["Modern & clean","Fett & riesig","Elegant mit Serifen","Verspielt","Technisch / Mono","Geometrisch","Handgeschrieben"]},
+  {s:"design", id:"schrift_paar", label:"Schrift-Kombination", type:"single", p:"Schrift-Kombination", opts:["Eine Schrift für alles","Display + Text","Serif + Sans","Sans + Mono-Akzente"]},
+  {s:"design", id:"ueberschrift", not:["dashboard"], label:"Größe der Überschriften", type:"single", p:"Überschriften", opts:["Normal","Groß","Riesig","Bildschirmfüllend"]},
+  {s:"design", id:"ecken", label:"Ecken", type:"single", p:"Ecken", opts:["Eckig","Leicht rund","Rund","Sehr rund / Pillen"]},
+  {s:"design", id:"schatten", label:"Schatten", type:"single", p:"Schatten", opts:["Keine","Weich","Stark","Farbige Glows","Neumorph (weich gedrückt)"]},
+  {s:"design", id:"abstand", not:["dashboard"], label:"Abstände", type:"single", p:"Abstände", opts:["Kompakt","Normal","Sehr luftig"]},
+  {s:"design", id:"layout", for:SITE, label:"Layout-Idee", type:"single", own:true, p:"Layout", opts:["Klassisch untereinander","Asymmetrisch wie ein Magazin","Kacheln (Bento-Grid)","Vollbild-Abschnitte","Geteilter Bildschirm"]},
+  {s:"design", id:"buttons", label:"Buttons", type:"single", own:true, p:"Buttons", opts:["Gefüllt","Umriss","Glas","Mit Pfeil-Animation","Magnetisch","Mit Glow"]},
+  {s:"design", id:"karten", label:"Karten und Boxen", type:"single", p:"Karten", opts:["Glas","Weiß mit Schatten","Nur Rahmen","Farbig gefüllt","Ohne Boxen"]},
+  {s:"design", id:"icons", label:"Icons", type:"single", p:"Icons", opts:["Linien","Gefüllt","3D","Handgezeichnet","Keine Icons"]},
+  {s:"design", id:"bilder", not:["dashboard"], label:"Bilder", type:"single", own:true, p:"Bilder", opts:["Platzhalter-Grafiken","Eigene Bilder (füge ich später ein)","Illustrationen (SVG)","3D statt Bilder","Keine Bilder"]},
+  {s:"design", id:"bildstil", for:VIS, label:"Bildbehandlung", type:"single", p:"Bildbehandlung", opts:["Normal","Schwarzweiß","Duotone (zweifarbig)","In Formen maskiert","Mit Rahmen"]},
+  {s:"design", id:"illus", not:["dashboard"], label:"Illustrationen", type:"single", p:"Illustrationen", opts:["Keine","Flach","3D-Renders","Handgezeichnet","Abstrakte Formen"]},
+  {s:"design", id:"logo", label:"Logo", type:"single", p:"Logo", opts:["Nur der Name als Text","Ich habe schon ein Logo","Bitte einfaches SVG-Logo entwerfen"]},
+  {s:"design", id:"vorbilder", label:"Websites oder Apps, die dir gefallen", type:"text", ph:"Namen oder Links", p:"Vorbilder"},
+  {s:"design", id:"gefuehl", label:"Drei Wörter, wie es sich anfühlen soll", type:"text", ph:"z. B. edel, schnell, frech", p:"Gefühl"},
+  {s:"design", id:"design_frei", label:"Design in deinen eigenen Worten", type:"textarea", ph:"Beschreib, wie du es dir vorstellst", p:"Design-Vorstellung"},
+
+  // ANIMATION & 3D
+  {s:"animation", id:"staerke", label:"Wie viel Animation insgesamt?", type:"range", min:0, max:4, def:3, steps:["Keine","Dezent","Mittel","Viel","Extrem"], p:"Stärke"},
+  {s:"animation", id:"tempo", label:"Tempo", type:"single", p:"Tempo", opts:["Langsam & elegant","Normal","Schnell & knackig"]},
+  {s:"animation", id:"easing", label:"Bewegungs-Charakter", type:"single", p:"Bewegungs-Charakter", opts:["Weich","Federnd","Elastisch","Mechanisch präzise"]},
+  {s:"animation", id:"effekte", for:[...SITE,"webapp"], label:"Welche Effekte?", type:"multi", own:true, p:"Effekte", opts:["Einblenden beim Scrollen","Parallax","Partikel","Laufband","Zahlen zählen hoch","Bilder-Reveal","Sticky-Abschnitte","Fortschrittsbalken","Konfetti bei Erfolg"]},
+  {s:"animation", id:"scroll", for:SITE, label:"Scroll-Verhalten", type:"single", own:true, p:"Scroll-Verhalten", opts:["Normal","Weich (Smooth Scroll)","Einrasten pro Abschnitt","Horizontale Abschnitte","Scroll-Story mit festgepinnten Szenen"]},
+  {s:"animation", id:"scrollstory", for:SITE, label:"Was soll beim Scrollen passieren?", type:"textarea", ph:"z. B. Box öffnet sich, Kamera fliegt rein, Produkte erscheinen", p:"Scroll-Story"},
+  {s:"animation", id:"text_anim", for:VIS, label:"Text-Animationen", type:"multi", p:"Text-Animationen", opts:["Buchstabe für Buchstabe","Wort für Wort","Von unten reinschieben","Unscharf zu scharf","Schreibmaschine","Zeichen-Wirrwarr (Scramble)"]},
+  {s:"animation", id:"hover", for:[...VIS,"dashboard"], label:"Hover-Effekte", type:"multi", p:"Hover-Effekte", opts:["Anheben","3D-Kippen","Glanz-Reflex","Magnetisch","Farbwechsel","Animierte Unterstreichung","Bild-Zoom"]},
+  {s:"animation", id:"cursor", for:SITE, label:"Mauszeiger", type:"single", p:"Mauszeiger", opts:["Normal","Punkt + Ring","Mit Text über Elementen","Flüssiger Blob","Spotlight"]},
+  {s:"animation", id:"loader", for:[...SITE,"game"], label:"Ladebildschirm", type:"single", p:"Ladebildschirm", opts:["Keiner","Logo-Animation","Prozent-Zähler","Vorhang öffnet sich"]},
+  {s:"animation", id:"uebergang", not:["dashboard"], label:"Übergänge zwischen Seiten/Screens", type:"single", p:"Übergänge", opts:["Keine","Überblenden","Vorhang","Schieben","Geteilte Elemente (Morph)"]},
+  {s:"animation", id:"dreid", for:BROWSER, label:"3D?", type:"single", p:"3D", opts:["Kein 3D","Ein Hauptobjekt","Ganze 3D-Szene","Mehrere kleine Objekte","3D nur im Hintergrund"]},
+  {s:"animation", id:"wowsel", label:"Welcher Wow-Moment?", type:"single", bank:"WOW", p:"Wow-Moment"},
+  {s:"animation", id:"objekt3d", for:BROWSER, label:"Welches 3D-Objekt oder welche Szene?", type:"textarea", ph:"z. B. ein schwebendes Preisschild aus Glas", p:"3D-Objekt/Szene"},
+  {s:"animation", id:"dreid_stil", for:BROWSER, label:"3D-Stil", type:"single", own:true, p:"3D-Stil", opts:["Glas / Kristall","Chrom / Metall","Low-Poly","Wireframe / Neon-Kanten","Knete / Clay","Realistisch","Comic / Toon"]},
+  {s:"animation", id:"licht", for:BROWSER, label:"Licht", type:"single", p:"Licht", opts:["Hell wie im Studio","Dramatisch","Neon / farbig","Sonnenuntergang","Weich & diffus"]},
+  {s:"animation", id:"kamera", for:BROWSER, label:"Kamera", type:"single", p:"Kamera", opts:["Steht still","Dreht sich langsam","Folgt der Maus","Fährt beim Scrollen"]},
+  {s:"animation", id:"partikel", for:BROWSER, label:"Partikel", type:"single", p:"Partikel", opts:["Keine","Sterne / Staub","Funken","Schwebende Formen","Reagieren auf die Maus"]},
+  {s:"animation", id:"shader", for:BROWSER, label:"Spezialeffekte", type:"multi", p:"Spezialeffekte", opts:["Verzerrung beim Hover","Flüssige Wellen","Glitch","Noise-Verlauf","Bloom / Leuchten","Keine"]},
+  {s:"animation", id:"interaktion", label:"Interaktion", type:"multi", own:true, p:"Interaktion", opts:["Reagiert auf die Maus","Reagiert auf Touch / Handy-Neigung","3D-Objekte anklickbar","Sounds (erst nach Klick)","Ziehen und Werfen"]},
+  {s:"animation", id:"db_anim", for:["dashboard"], label:"Animationen im Dashboard", type:"multi", p:"Dashboard-Animationen", opts:["Diagramme bauen sich auf","Zahlen zählen hoch","Weiche Übergänge beim Filtern","Live-Puls bei neuen Daten","Keine"]},
+  {s:"animation", id:"app_anim", for:["app"], label:"Gesten und Bewegung in der App", type:"multi", p:"App-Bewegung", opts:["Wischen","Ziehen zum Aktualisieren","Langes Drücken","Federnde Übergänge","Haptik bei Aktionen","Schrumpfender Header"]},
+  {s:"animation", id:"g_effekte", for:["game"], label:"Spiel-Effekte", type:"multi", p:"Spiel-Effekte", opts:["Bildschirmwackeln","Partikel-Explosionen","Zeitlupe","Parallax-Hintergrund","Treffer-Blitz"]},
+  {s:"animation", id:"mobil_anim", not:["app"], label:"Auf dem Handy", type:"single", p:"Animation auf dem Handy", opts:["Genauso wie am PC","Abgespeckt","Ohne 3D"]},
+  {s:"animation", id:"reduced", label:"Rücksicht auf Leute, denen Bewegung nicht gut tut?", type:"single", p:"Reduzierte Bewegung", opts:["Ja, dann Animationen reduzieren","Egal"]},
+
+  // TECHNIK
+  {s:"technik", id:"tech", label:"Womit soll gebaut werden?", type:"single", own:true, p:"Umsetzung",
+    optsBy:{default:["Eine einzige HTML-Datei","HTML/CSS/JS getrennt","React (Vite)","Next.js","Vue","Svelte","Astro"],
+            app:["Flutter","React Native (Expo)","Swift (iPhone)","Kotlin (Android)","PWA (installierbare Web-App)"],
+            game:["Eine einzige HTML-Datei","HTML/CSS/JS getrennt","Vite-Projekt","Du bist ein Level-Designer und Programmierer, der Spielfluss und Technik zusammen denkt.","Du bist ein Arcade-Entwickler, der klassische Spielgefühle modern umsetzt."],
+            dashboard:["Eine einzige HTML-Datei","React (Vite)","Next.js","Vue","Svelte"]}},
+  {s:"technik", id:"libs", not:["app"], label:"Bibliotheken", type:"multi", own:true, p:"Bibliotheken",
+    optsBy:{default:["Three.js","GSAP + ScrollTrigger","Lenis (Smooth Scroll)","Tailwind","Framer Motion","Barba.js"],
+            dashboard:["Chart.js","ECharts","D3","Tailwind","AG Grid"],
+            game:["Phaser","Three.js","PixiJS","Matter.js (Physik)","Howler (Sound)"]}},
+  {s:"technik", id:"codesprache", not:["app"], label:"JavaScript oder TypeScript?", type:"single", p:"Sprache", opts:["JavaScript","TypeScript","Egal"]},
+  {s:"technik", id:"geraete", not:["app"], label:"Auf welchen Geräten?", type:"multi", p:"Geräte", opts:["Handy","Tablet","Laptop / PC","Großer Bildschirm"]},
+  {s:"technik", id:"prio", not:["app"], label:"Was ist wichtiger?", type:"single", p:"Priorität", opts:["Handy zuerst","PC zuerst","Beides gleich"]},
+  {s:"technik", id:"backend", label:"Braucht es ein Backend?", type:"single", own:true, p:"Backend", opts:["Nein, nur Frontend","Formular soll echte E-Mails schicken","Datenbank / Login","Weiß ich nicht"]},
+  {s:"technik", id:"hosting", label:"Wo soll es online gehen?", type:"single", own:true, p:"Hosting",
+    optsBy:{default:["Weiß ich noch nicht","GitHub Pages","Netlify","Vercel","Eigener Server"], app:["App Store","Play Store","Beide Stores","Erst nur zum Testen"]}},
+  {s:"technik", id:"speed", label:"Ladezeit oder Effekte?", type:"single", p:"Ladezeit vs. Effekte", opts:["Schnell laden ist wichtiger","Effekte sind wichtiger","Ausgewogen"]},
+  {s:"technik", id:"offline", for:["webapp","game","dashboard"], label:"Offline nutzbar?", type:"single", p:"Offline", opts:["Ja","Nein"]},
+  {s:"technik", id:"seo", for:SITE, label:"Bei Google gefunden werden (SEO)?", type:"single", p:"SEO", opts:["Ja, wichtig","Egal"]},
+  {s:"technik", id:"barriere", label:"Barrierefrei?", type:"single", p:"Barrierefreiheit", opts:["Ja","Egal"]},
+  {s:"technik", id:"browser", not:["app"], label:"Welche Browser?", type:"single", p:"Browser", opts:["Aktuelle Browser reichen","Auch ältere Browser"]},
+
+  // AUSGABE
+  {s:"ausgabe", id:"erfahrung", label:"Wie viel Erfahrung hast du mit Code?", type:"single", p:"Meine Erfahrung", opts:["Anfänger","Etwas","Fortgeschritten","Profi"]},
+  {s:"ausgabe", id:"lieferung", label:"Wie soll der Code kommen?", type:"single", p:"Lieferung", opts:["Alles in einem Stück","Schritt für Schritt","Erst Plan, dann Code"]},
+  {s:"ausgabe", id:"rueckfragen", label:"Darf Claude Rückfragen stellen?", type:"single", p:"Rückfragen", opts:["Nein, selbst entscheiden","Ja, erst fragen, dann bauen"]},
+  {s:"ausgabe", id:"dateien", label:"Dateien", type:"single", p:"Dateien", opts:["Möglichst eine Datei","Mehrere Dateien mit Ordnerstruktur"]},
+  {s:"ausgabe", id:"kommentare", label:"Kommentare im Code", type:"single", p:"Kommentare", opts:["Deutsch","Englisch","Keine"]},
+  {s:"ausgabe", id:"erklaerung", label:"Wie viel Erklärung?", type:"single", p:"Erklärung", opts:["Nur Code","Kurze Anleitung","Ausführlich erklären"]},
+  {s:"ausgabe", id:"anpassbar", label:"Was soll leicht änderbar sein?", type:"multi", own:true, p:"Leicht änderbar", opts:["Farben als Variablen","Texte","Inhalte als Liste im Code","Bilder","Links","Animations-Tempo"]},
+  {s:"ausgabe", id:"pruefen", label:"Code vor der Ausgabe selbst prüfen lassen?", type:"single", p:"Selbstprüfung", opts:["Ja","Egal"]},
+  {s:"ausgabe", id:"deploy", label:"Anleitung zum Online-Stellen?", type:"single", p:"Online-Anleitung", opts:["Ja","Nein"]},
+  {s:"ausgabe", id:"ideen", label:"Am Ende Ideen für Verbesserungen?", type:"single", p:"Verbesserungsideen", opts:["Ja, 3 Ideen","Nein"]},
+
+  // EIGENE WORTE
+  {s:"eigene", id:"muss", label:"Das MUSS unbedingt rein", type:"textarea", ph:"Eins pro Zeile", p:"Muss rein"},
+  {s:"eigene", id:"nogo", label:"Das will ich auf keinen Fall", type:"textarea", ph:"z. B. keine Stockfotos, kein Lila", p:"Auf keinen Fall"},
+  {s:"eigene", id:"beispiele", label:"Beispieltexte oder -daten", type:"textarea", ph:"Texte, Produktnamen, Zahlen …", p:"Beispielinhalte"},
+  {s:"eigene", id:"frei", label:"Alles andere, in deinen eigenen Worten", type:"textarea", hint:"Ideen, Wünsche, Beispiele. Wird so übernommen.", ph:"Ich stell mir vor, dass …", p:"In meinen eigenen Worten"},
+
+  // MODELL
+  {s:"modell", id:"modell", label:"Für welches Modell?", type:"model"},
+
+  // EINSTELLUNGEN
+  {s:"einstellungen", id:"set_detail", setting:true, def:"Ausführlich", label:"Wie ausführlich sollen die Prompts sein?", type:"single", opts:["Kurz","Normal","Ausführlich","Extrem"], hint:"Extrem fügt Experten-Tipps, Qualitätsregeln und Abnahmekriterien hinzu."},
+  {s:"einstellungen", id:"set_format", setting:true, def:"Markdown", label:"Format des Prompts", type:"single", opts:["Markdown","XML-Tags","Klartext","Nummeriert"], hint:"XML-Tags versteht Claude besonders gut."},
+  {s:"einstellungen", id:"set_rolle", setting:true, def:"Automatisch", label:"Welche Rolle bekommt Claude?", type:"single", opts:["Automatisch","Creative Developer","Designer + Entwickler","Software-Engineer","Geduldiger Lehrer","Agentur-Team","Game-Developer"]},
+  {s:"einstellungen", id:"set_kreativ", setting:true, def:"Ausgewogen", label:"Wie viel kreative Freiheit?", type:"single", opts:["Streng nach Vorgaben","Ausgewogen","Viel Freiheit"], hint:"Bei „Ausgewogen“ und „Viel Freiheit“ bekommt jede Variante eine eigene Designrichtung und einen Wow-Moment."},
+  {s:"einstellungen", id:"set_anzahl", setting:true, def:"3", label:"Wie viele Varianten auf einmal?", type:"single", opts:["1","3","5","10"]},
+  {s:"einstellungen", id:"set_check", setting:true, def:"An", label:"Checkliste am Ende", type:"single", opts:["An","Aus"]},
+  {s:"einstellungen", id:"set_experten", setting:true, def:"An", label:"Experten-Tipps zur Projektart einfügen", type:"single", opts:["An","Aus"]},
+  {s:"einstellungen", id:"set_platzhalter", setting:true, def:"Claude erfindet Beispiele", label:"Fehlende Inhalte", type:"single", opts:["Claude erfindet Beispiele","Als [PLATZHALTER] markieren"]},
+  {s:"einstellungen", id:"set_sparen", setting:true, def:"Aus", label:"Token-Sparmodus", type:"single", opts:["An","Aus"], hint:"Weist Claude an, außerhalb des Codes sehr knapp zu bleiben."}
+];
+
+const MODELS = [
+  {id:"fable", name:"Fable 5.1", api:"claude-fable-5-1", tier:"complex", power:5, pin:10, pout:50, tag:"Kostet Guthaben (Pro)", cost:true, desc:"Das stärkste Modell. Beim Pro-Plan läuft es über dein Nutzungsguthaben, darum am besten alles mit einem Prompt."},
+  {id:"opus", name:"Opus 5.5", api:"claude-opus-5-5", tier:"complex", power:4, pin:4, pout:20, tag:"Im Pro-Plan drin", desc:"Fast so stark wie Fable. Für Websites mit 3D und Animationen die beste Wahl ohne Extrakosten."},
+  {id:"sonnet", name:"Sonnet 5.5", api:"claude-sonnet-5-5", tier:"default", power:3, pin:2, pout:10, tag:"Im Pro-Plan drin", desc:"Schnell und spart Limit. Gut für normale Seiten, braucht bei viel 3D eher mal eine Korrektur."},
+  {id:"haiku", name:"Haiku 5.5", api:"claude-haiku-5-5", tier:"quick", power:2, pin:0.1, pout:0.5, tag:"Im Pro-Plan drin", desc:"Sehr schnell, aber für große Projekte zu schwach. Gut für Kleines."}
+];
+
+/* ================= Varianten-Bausteine ================= */
+const ROLES = {
+  creative:["Du bist ein Senior Creative Developer, der preisgekrönte interaktive Projekte baut.","Du bist Creative Technologist in einer Digitalagentur und bekannt für Arbeiten mit Wow-Effekt.","Du bist Lead Creative Developer und verbindest Design, Animation und sauberen Code.","Du bist ein erfahrener WebGL- und Motion-Entwickler mit sehr gutem Auge für Design.","Du bist ein Creative Developer, dessen Arbeiten regelmäßig in Design-Galerien ausgezeichnet werden.","Du bist Art-Director-Developer, der Bewegung als Erzählmittel nutzt.","Du bist ein Creative Coder, der Animation und Interaktion als eine Einheit denkt."],
+  designer:["Du bist ein UI/UX-Designer, der seine Entwürfe selbst perfekt umsetzt.","Du bist Art Director und Frontend-Entwickler in einer Person.","Du bist ein Produktdesigner mit 10 Jahren Erfahrung, der pixelgenau programmiert.","Du bist Designer und Entwickler und achtest auf jedes Detail von Typo bis Animation.","Du bist ein Interface-Designer, der Gestaltung und Code gleich gut beherrscht.","Du bist ein Brand-Designer, der Marken in lebendige Webseiten übersetzt.","Du bist ein Motion-Designer, der Bewegung aus dem Design heraus entwirft."],
+  engineer:["Du bist ein Senior Software-Engineer mit viel Erfahrung in sauberer, wartbarer Architektur.","Du bist Lead Developer und baust robuste Anwendungen mit sehr guter Bedienbarkeit.","Du bist ein Full-Stack-Entwickler, der Wert auf Qualität, Tests und klare Struktur legt.","Du bist ein erfahrener Engineer, der komplexe Funktionen einfach bedienbar macht.","Du bist Tech Lead und schreibst Code, den andere gern weiterentwickeln.","Du bist ein Platform-Engineer, der Stabilität und Geschwindigkeit an erste Stelle setzt.","Du bist ein Software-Architekt, der einfache, verständliche Lösungen bevorzugt."],
+  teacher:["Du bist ein geduldiger Programmier-Mentor und erklärst alles so, dass Anfänger es verstehen.","Du bist ein Entwickler, der gleichzeitig Lehrer ist: du baust es und erklärst jeden wichtigen Schritt.","Du bist ein freundlicher Coding-Coach, der saubere Lösungen baut und verständlich erklärt.","Du bist Mentor für junge Entwickler und baust Projekte, an denen man lernen kann.","Du bist ein Entwickler mit Talent fürs Erklären, ohne Fachchinesisch.","Du bist ein Lehrer für Webentwicklung, der jeden Schritt mit einem kurzen Beispiel erklärt.","Du bist ein Coach, der schrittweise aufbaut und Fragen zwischendurch beantwortet."],
+  team:["Ihr seid ein Agentur-Team aus Designer, Entwickler und Motion-Designer und arbeitet zusammen an diesem Projekt.","Du übernimmst die Rollen eines ganzen Agentur-Teams: Konzept, Design, Entwicklung und Qualitätskontrolle.","Du bist eine kleine Kreativagentur in einer Person, von Konzept bis Code.","Du denkst wie ein Team: zuerst Konzept, dann Design, dann Code, dann Review.","Du bist ein Studio für digitale Produkte und lieferst alles aus einer Hand.","Du bist ein Projektteam aus Strategie, Design und Technik, das gemeinsam ein Ergebnis abliefert.","Ihr seid ein kleines Startup-Team, das schnell, aber sauber liefert."],
+  game:["Du bist ein erfahrener Game-Developer mit Gefühl für Spielspaß und Game-Feel.","Du bist Indie-Game-Entwickler und baust kleine Spiele, die sofort süchtig machen.","Du bist Game-Designer und Programmierer in einer Person.","Du bist ein Entwickler, der Browser-Spiele mit perfekter Steuerung und Effekten baut.","Du bist Gameplay-Programmierer mit Liebe zu Details wie Screenshake und Sounds."]
+};
+const OPENERS = [
+  "Baue mir {art} komplette, fertige {what} für „{name}“.",
+  "Ich brauche {art} {what} für „{name}“, fix und fertig zum Benutzen.",
+  "Entwickle und gestalte {art} vollständige {what} mit dem Namen „{name}“.",
+  "Deine Aufgabe: {art} {what} für „{name}“ von Grund auf bauen, richtig gut.",
+  "Erstelle {art} {what} für „{name}“, die sich hochwertig anfühlt und sofort funktioniert.",
+  "Setz diese Idee als {what} um: „{name}“. Unten steht alles, was du wissen musst.",
+  "Ich möchte, dass du {art} {what} für „{name}“ baust, die meine Zielgruppe umhaut.",
+  "Hier ist mein Briefing für {art} {what} namens „{name}“. Bitte bau alles komplett.",
+  "Stell dir vor, „{name}“ wäre {art} {what}. Mach sie Wirklichkeit, vollständig.",
+  "Projekt-Start: {art} {what} für „{name}“. Denk mit, entscheide sinnvoll und liefere alles.",
+  "Bitte entwirf und baue {art} {what} für „{name}“, so als würde sie morgen live gehen.",
+  "Ich brauche {what} für „{name}“ – {art}, mit allem, was dazugehört, ohne Platzhalter.",
+  "Mein Ziel: {art} {what} für „{name}“, die man in den ersten Sekunden nicht vergisst.",
+  "Gestalte und programmiere {art} {what} für „{name}“. Eigene Ideen sind willkommen.",
+  "Nimm dieses Briefing und mach daraus {art} {what}: „{name}“. Alles drin, alles fertig."
+];
+const ORDERS = [["aufbau","inhalt","design","animation"],["design","animation","aufbau","inhalt"],["inhalt","aufbau","animation","design"],["aufbau","design","inhalt","animation"],["animation","design","inhalt","aufbau"],["inhalt","design","aufbau","animation"],["design","inhalt","animation","aufbau"],["animation","aufbau","design","inhalt"],["aufbau","animation","inhalt","design"],["inhalt","animation","design","aufbau"],["design","aufbau","inhalt","animation"],["animation","inhalt","aufbau","design"]];
+const DIRECTIONS = ["Schweizer Typografie mit einem einzigen, mutigen Farbakzent","Weiche Glasflächen über einem langsam fließenden Farbverlauf","Editorial wie ein Modemagazin, mit großen Bildausschnitten","Technisches Datenblatt mit Mono-Schrift und feinen Linien","Verspielte, weiche 3D-Formen wie aus Knete","Kühler Chrom-Look mit spiegelnden Oberflächen","Retro-Futurismus der 80er mit Raster-Horizont","Ruhiges, japanisch inspiriertes Layout mit viel Weißraum","Brutalistische Kanten, harte Kontraste, ehrliche Struktur","Sanfter Pastell-Look mit runden Formen","Kinoreife Dunkelheit mit dramatischem Licht","Papier-Collage mit ausgeschnittenen Formen","Neon-Arcade mit leuchtenden Konturen","Organische Formen und weiche Wellen wie Wasser","Architektonisches Raster mit klaren Blöcken","Holografische Schimmer-Effekte auf hellen Flächen","Streetwear-Lookbook mit fetter Typo über Bildern","Minimalistisches Produkt-Showcase wie in einem Museum","Comic-Panels mit dicken Konturen","Analoge Körnung und Filmlook","Bento-Kacheln mit lebendigen Mini-Animationen","Riesige Zahlen und Typografie als Hauptdarsteller","Weltraum-Thema mit Tiefe und schwebenden Objekten","Luxuriös mit Serifenschrift, Gold-Details und viel Ruhe","Spielerisch mit Stickern und schrägen Elementen","Blueprint-Look mit Konstruktionslinien","Y2K mit Chrome-Schrift und Glitzer-Akzenten","Natur-Look mit erdigen Tönen und weichen Schatten","Magazin-Cover-Ästhetik für jeden Abschnitt","Präzise Daten-Ästhetik mit feinen Details","Weiche, sanft gedrückte Flächen mit zarten Schatten","Monochrom in einer Farbe mit vielen Abstufungen","Schwarz-Weiß mit einem Signalfarben-Detail","Isometrische Illustrationen und kleine Welten","Kinetische Typo: Laufbänder und bewegte Schrift","Spotlight-Effekt, der dem Cursor folgt","Flüssige Blob-Formen, die sich langsam verwandeln","Punkte-Raster, das auf die Maus reagiert","Karten, die wie echte Objekte gestapelt sind","Modern interpretiertes Zeitungs-Layout mit Spalten","Aquarell-Verläufe mit klarer Typo","Kristall- und Prisma-Licht mit Regenbogenbrechung","Sci-Fi-Interface mit HUD-Elementen","Tiefe durch mehrere Parallax-Ebenen","Handgezeichnete Linien und Notizbuch-Charme","Großflächige Farbblöcke, die beim Scrollen wechseln","Hyper-sauberer Produktlook wie bei einer Tech-Keynote","Retro-Computer mit Pixel-Details"];
+const WOW = {
+  web:["Ein 3D-Objekt, das sich beim Scrollen zerlegt und wieder zusammensetzt","Text, der sich beim Scrollen aus Partikeln formt","Ein Abschnitt, in dem die Kamera durch eine 3D-Welt fliegt","Bilder, die sich beim Hover flüssig verzerren","Ein Hintergrund, der wie Wasser auf die Maus reagiert","Ein horizontaler Abschnitt wie ein Filmstreifen","Eine riesige Überschrift, die sich beim Scrollen mit Farbe füllt","Karten, die sich wie ein Kartenstapel auffächern","Ein Licht, das der Maus folgt und Objekte beleuchtet","Ein Ladebildschirm, der nahtlos in den Startbereich übergeht","Zahlen, die wie ein Spielautomat hochrollen","Ein magnetischer Cursor, der Buttons anzieht","Abschnitte, die wie Vorhänge aufgehen","Ein 3D-Objekt, das man mit der Maus drehen kann","Die ganze Seite wechselt pro Abschnitt sanft die Farbe"],
+  app:["Ein Onboarding mit flüssigen Übergängen zwischen Illustrationen","Geteilte Element-Übergänge von der Liste zur Detailansicht","Ein federndes Ziehen-zum-Aktualisieren mit eigener Animation","Haptisches Feedback bei wichtigen Aktionen","Eine Tab-Leiste mit animiertem Indikator","Karten, die man mit Wisch-Gesten sortiert","Ein Erfolgs-Moment mit kleiner Konfetti-Animation","Elegant pulsierende Skelett-Ladezustände","Ein Header, der beim Scrollen weich schrumpft","Ein Startbildschirm mit Live-Infos wie Widgets","Ein Long-Press-Menü mit Glas-Effekt","Ein Dark-Mode-Wechsel mit kreisförmiger Enthüllung"],
+  dashboard:["Diagramme, die sich beim Laden nacheinander aufbauen","Kennzahlen mit Mini-Sparklines und Trendpfeilen","Ein Zeitraum-Regler, der alles live aktualisiert","Hover über einen Datenpunkt hebt ihn in allen Diagrammen hervor","Eine Schnellsuche mit Tastenkürzel (Strg+K)","Hilfreiche Leerzustände statt leerer Flächen","Vergleich zur Vorperiode mit farbigen Abweichungen","Weiche Übergänge, wenn Filter wechseln","Eine Heatmap mit detaillierten Tooltips","Kacheln per Drag-and-Drop umsortieren","Ein Live-Puls-Indikator für frische Daten","Export-Button mit Erfolgs-Toast"],
+  game:["Bildschirmwackeln und kurze Zeitlupe bei wichtigen Treffern","Partikel-Explosionen beim Einsammeln","Ein Parallax-Hintergrund mit mehreren Ebenen","Ein Combo-Zähler, der immer größer wird","Ein Startbildschirm mit animiertem Titel","Eine weiche Kamera, die dem Spieler folgt","Highscore-Feier mit Konfetti","Sounds, die mit dem Tempo schneller werden","Power-ups mit Leuchtspur","Ein Boss mit eigener Intro-Animation","Treffer-Blitze auf dem Gegner","Tag-/Nacht-Wechsel im Hintergrund"]
+};
+const EMPH = ["Typografie und Lesbarkeit","flüssige Animationen ohne Ruckeln","Mikrointeraktionen bei jedem Klick","eine klare, einfache Bedienung","Performance und schnelle Ladezeit","einen starken ersten Eindruck in den ersten 3 Sekunden","saubere, gut erweiterbare Code-Struktur","perfekte Darstellung auf dem Handy","Konsistenz bei Abständen, Farben und Formen","Barrierefreiheit und Tastaturbedienung","eine ruhige, gut lesbare Farbpalette","überraschende, aber nie störende Animationen","klare Hierarchie: wichtig zuerst, Nebensächliches leise","Vertrauen durch Details wie Ladezustände und Fehlermeldungen","Wiedererkennbarkeit durch eine eigene visuelle Handschrift"];
+const CLOSERS = ["Leg los und gib mir direkt das komplette Ergebnis.","Fang jetzt an.","Zeig mir, was du kannst.","Bau es jetzt, vollständig und ohne Abkürzungen.","Starte direkt mit der Umsetzung.","Ich bin gespannt, leg los.","Mach daraus etwas, das man nicht vergisst.","Los geht's: komplett, sauber und mit Liebe zum Detail.",
+  "Overachieve bitte: mehr Details als verlangt, aber alles sauber.",
+  "Denk groß, bau präzise. Ich lasse dich machen.",
+  "Keine Rückfragen, bitte – triff sinnvolle Entscheidungen selbst und liefere.",
+  "Am Ende will ich eine Datei, die ich sofort öffnen und zeigen kann."];
+const QUALITY = ["Qualität wie von einer preisgekrönten Digitalagentur.","So poliert, dass es in einer Design-Galerie ausgezeichnet werden könnte.","Wie ein Premium-Produkt, bei dem jedes Detail stimmt.","Professionell genug, um es sofort echten Kunden zu zeigen.","Mit der Sorgfalt eines Teams, das seit Jahren nichts anderes macht.","Modern, schnell, fehlerfrei und mit eigener Handschrift.",
+  "Jede Animation hat einen Grund und jeder Abstand eine Regel.",
+  "Erst beim dritten Hinschauen merkt man, wie viel Liebe drinsteckt.",
+  "Auf dem Handy so gut wie am Desktop, ohne Kompromisse.",
+  "Wenn ein Detail nicht stimmt, wird es nachgebessert, bis es stimmt."];
+
+/* ================= Erklärungen zu Fachbegriffen ================= */
+const GLOSS = {
+  "Eine einzige HTML-Datei": "Alles (Aufbau, Design, Code) steckt in einer einzigen .html-Datei. Ideal zum Testen und Verschicken.",
+  "HTML/CSS/JS getrennt": "Die Seite wird in mehrere Dateien aufgeteilt: Struktur (HTML), Design (CSS) und Verhalten (JavaScript). Übersichtlicher bei größeren Projekten.",
+  "React (Vite)": "Eine beliebte Bibliothek, um Oberflächen aus wiederverwendbaren Bausteinen (Komponenten) zu bauen. Vite startet und baut das Projekt schnell.",
+  "Next.js": "Ein Framework auf Basis von React, das zusätzlich Seiten am Server vorbereitet, gut für Suchmaschinen und schnelle Ladezeiten.",
+  "Vue": "Ein Framework zum Bauen von Oberflächen, das etwas einfacher zu lernen ist als React.",
+  "Svelte": "Ein Framework, das den Code beim Bauen schon vorab in effizientes JavaScript umwandelt. Dadurch sehr schlanke Seiten.",
+  "Astro": "Ein Framework für schnelle Websites, die größtenteils fertig als HTML ausgeliefert werden. Gut für Blogs und Landingpages.",
+  "Flutter": "Ein Framework von Google, mit dem du mit einem Code-Stand eine App für iPhone und Android bauen kannst.",
+  "React Native (Expo)": "Macht aus JavaScript/React echte Handy-Apps für iPhone und Android. Expo erleichtert Start und Tests.",
+  "Swift (iPhone)": "Die Programmiersprache von Apple. Damit baut man native iPhone-Apps, nur für Apple-Geräte.",
+  "Kotlin (Android)": "Die Standard-Sprache für native Android-Apps.",
+  "PWA (installierbare Web-App)": "Eine Website, die sich wie eine App auf dem Handy installieren lässt, ohne App Store.",
+  "Vite-Projekt": "Ein schnell startender Entwicklungs-Werkzeugkasten für moderne Web-Projekte.",
+  "TypeScript": "JavaScript mit Typen. Fehler fallen früher auf, der Code ist sicherer und besser lesbar.",
+  "JavaScript": "Die Sprache, mit der Websites lebendig werden: Klicks, Animationen, Logik.",
+  "Three.js": "Eine Bibliothek für echte 3D-Grafik im Browser, z. B. drehbare Objekte, Licht und Kameras.",
+  "GSAP + ScrollTrigger": "GSAP ist eine sehr präzise Animations-Bibliothek. ScrollTrigger startet und steuert Animationen abhängig davon, wie weit man scrollt.",
+  "Lenis (Smooth Scroll)": "Macht das Scrollen weich und gleichmäßig, statt ruckartig. Oft für Scroll-Animationen genutzt.",
+  "Tailwind": "Ein CSS-Baukasten, bei dem man das Design direkt über kleine Klassen im HTML einstellt.",
+  "Framer Motion": "Eine Animations-Bibliothek für React, mit der Bewegungen einfach beschrieben werden können.",
+  "Barba.js": "Lädt beim Klicken auf Links nur den neuen Inhalt nach, mit flüssigem Seitenwechsel ohne Neuladen.",
+  "Chart.js": "Eine einfache Bibliothek für Diagramme wie Linien-, Balken- oder Tortendiagramme.",
+  "ECharts": "Eine mächtige Diagramm-Bibliothek für viele Diagrammtypen und große Datenmengen.",
+  "D3": "Eine sehr flexible Bibliothek, mit der man Daten frei als Grafik zeichnet. Dafür braucht man mehr Programmiererfahrung.",
+  "AG Grid": "Eine fertige, leistungsstarke Tabelle mit Sortieren, Filtern und Scrollen für große Datenmengen.",
+  "Phaser": "Eine Spiele-Bibliothek für den Browser, mit Figuren, Physik und Kollisionen.",
+  "PixiJS": "Eine schnelle 2D-Grafik-Bibliothek, oft für Spiele und animierte Effekte im Browser.",
+  "Matter.js (Physik)": "Eine Physik-Engine: Objekte fallen, prallen ab und stoßen zusammen, wie in der echten Welt.",
+  "Howler (Sound)": "Eine Bibliothek, um Sounds und Musik im Browser zuverlässig abzuspielen.",
+  "GitHub Pages": "Kostenloses Hosting von GitHub. Eine Website geht damit online, ohne eigenen Server.",
+  "Netlify": "Hosting-Dienst, der eine Seite direkt aus einem Projekt oder einer Datei veröffentlicht. Kostenlos für kleine Projekte.",
+  "Vercel": "Hosting-Dienst, besonders praktisch für Next.js und React-Projekte.",
+  "Eigener Server": "Du mietest oder hast einen eigenen Rechner im Netz, auf dem die Seite läuft. Mehr Kontrolle, mehr Aufwand.",
+  "App Store": "Apples Laden für iPhone-Apps. Veröffentlichen braucht ein Entwickler-Konto und eine Prüfung durch Apple.",
+  "Play Store": "Googles Laden für Android-Apps. Die Veröffentlichung ist meist etwas einfacher als im App Store.",
+  "Beide Stores": "Die App wird für iPhone (App Store) und Android (Play Store) veröffentlicht.",
+  "Erst nur zum Testen": "Die App läuft zunächst nur auf deinem Gerät oder für wenige Testpersonen, ohne öffentliche Veröffentlichung.",
+  "Firebase": "Ein Baukasten von Google mit Datenbank, Login und Hosting, ohne eigenen Server zu betreiben.",
+  "Supabase": "Eine Open-Source-Alternative zu Firebase mit Datenbank und Login auf Basis von PostgreSQL.",
+  "Eigene API": "Eine eigene Schnittstelle, über die die App Daten von deinem Server holt oder dorthin schickt.",
+  "Claude API": "Eine Schnittstelle, über die deine Anwendung direkt mit einem Claude-Modell sprechen kann. Dafür fallen Kosten pro Nutzung an.",
+  "Stripe": "Ein Zahlungsdienst, über den Websites Kreditkarten- und andere Zahlungen abwickeln können.",
+  "Magic Link": "Login ohne Passwort: Man bekommt einen Link per E-Mail und ist damit sofort eingeloggt.",
+  "Google-Login": "Anmelden mit dem bestehenden Google-Konto, ohne neues Passwort.",
+  "E-Mail + Passwort": "Der klassische Login: Konto mit E-Mail-Adresse und einem selbst gewählten Passwort.",
+  "Parallax": "Hintergrund und Vordergrund bewegen sich beim Scrollen unterschiedlich schnell. So entsteht ein räumlicher Tiefeneffekt.",
+  "Partikel": "Viele winzige Punkte, die als Gruppe animiert werden, z. B. Staub, Funken oder Sterne.",
+  "Laufband": "Ein Text oder Bild läuft endlos in einer Richtung durch, meist horizontal.",
+  "Sticky-Abschnitte": "Ein Element bleibt beim Scrollen stehen, während der Inhalt darunter oder daneben weiterläuft.",
+  "Fortschrittsbalken": "Eine Leiste, die zeigt, wie weit etwas schon ist, z. B. wie viel einer Seite gelesen wurde.",
+  "Zahlen zählen hoch": "Eine Zahl läuft beim Sichtbarwerden animiert von null bis zum Zielwert hoch.",
+  "Bilder-Reveal": "Ein Bild wird mit einer Maske oder Bewegung nach und nach sichtbar, statt einfach zu erscheinen.",
+  "Weich (Smooth Scroll)": "Das Scrollen wird geglättet, sodass die Seite gleitet statt springt.",
+  "Einrasten pro Abschnitt": "Beim Scrollen springt die Seite sanft von Abschnitt zu Abschnitt (Scroll-Snap).",
+  "Horizontale Abschnitte": "Beim vertikalen Scrollen bewegt sich ein Bereich seitlich, wie ein Filmstreifen.",
+  "Scroll-Story mit festgepinnten Szenen": "Eine Szene bleibt beim Scrollen fest stehen (Pinning), während sich darin etwas verändert, wie in einer Geschichte.",
+  "Scramble": "Ein Text erscheint zuerst als zufällige Zeichen und löst sich dann zum echten Wort auf.",
+  "Geteilte Elemente (Morph)": "Ein Element verwandelt sich fließend in ein anderes, z. B. von einer Liste in eine Detailansicht.",
+  "Federnd": "Die Bewegung schwingt kurz über das Ziel hinaus und pendelt sich ein, wie ein weicher Ball.",
+  "Elastisch": "Die Bewegung dehnt sich stark und schwingt mehrmals nach, wie ein Gummiband.",
+  "Mechanisch präzise": "Die Bewegung ist gleichmäßig und exakt, ohne Schwung, wie bei einer Maschine.",
+  "Hover": "Der Effekt, der passiert, wenn der Mauszeiger über einem Element schwebt.",
+  "3D-Kippen": "Beim Hover neigt sich ein Element räumlich nach vorn oder zur Seite, wie eine Karte.",
+  "Glanz-Reflex": "Beim Hover wandert ein heller Lichtschimmer über die Fläche.",
+  "Magnetisch": "Das Element wird vom Mauszeiger leicht angezogen, wie von einem Magneten.",
+  "Spotlight": "Ein heller Lichtkreis folgt dem Cursor und beleuchtet, was darunter liegt.",
+  "Punkt + Ring": "Der Mauszeiger besteht aus einem kleinen Punkt und einem größeren Ring, der verzögert folgt.",
+  "Flüssiger Blob": "Der Cursor ist eine weiche, sich verformende Form, die dem Mauszeiger folgt.",
+  "Wireframe / Neon-Kanten": "3D-Objekte werden nur als Drahtgitter oder leuchtende Kanten gezeigt, ohne volle Flächen.",
+  "Low-Poly": "3D-Formen mit wenigen, sichtbaren Flächen. Wirkt bewusst kantig und stilisiert.",
+  "Glas / Kristall": "3D-Objekte mit durchsichtiger, lichtbrechender Oberfläche.",
+  "Chrom / Metall": "3D-Objekte mit glänzender, spiegelnder Oberfläche.",
+  "Knete / Clay": "3D-Objekte, die weich und matt aussehen, wie aus Modelliermasse.",
+  "Comic / Toon": "3D-Objekte mit flachen Farbflächen und dicken Konturen, wie in einem Zeichentrick.",
+  "Shader": "Kleine Programme, die Oberflächen direkt auf der Grafikkarte berechnen. Damit entstehen Effekte wie Wellen oder Glitch.",
+  "Verzerrung beim Hover": "Beim Überfahren verbiegt sich die Fläche leicht, wie unter Wasser.",
+  "Flüssige Wellen": "Eine Fläche bewegt sich in sanften, sich wiederholenden Wellen.",
+  "Glitch": "Kurze, digitale Bildstörungen mit verschobenen Streifen und Farben.",
+  "Noise-Verlauf": "Ein Farbverlauf mit zufälliger, körniger Struktur, der organisch wirkt.",
+  "Bloom / Leuchten": "Helle Stellen strahlen nach außen, wie bei einer starken Lichtquelle.",
+  "Sterne / Staub": "Kleine, schwebende Lichtpunkte im Hintergrund, die für Tiefe sorgen.",
+  "Funken": "Kleine, helle Partikel, die schnell auseinanderfliegen und dann verblassen.",
+  "Schwebende Formen": "Einfache 3D-Formen, die langsam auf und ab schweben.",
+  "Ziehen und Werfen": "Man kann Objekte mit der Maus greifen, bewegen und loslassen. Sie fliegen mit Schwung weiter.",
+  "Haptisches Feedback": "Das Handy vibriert kurz bei einer Aktion, damit man die Reaktion spürt.",
+  "Tab-Leiste unten": "Eine Leiste am unteren Bildschirmrand mit Symbolen zum Wechseln zwischen Hauptbereichen.",
+  "Seitenmenü": "Ein Menü, das von der Seite eingeblendet wird, meist über ein Drei-Striche-Symbol.",
+  "Weiter/Zurück (Stack)": "Seiten werden wie ein Stapel übereinandergelegt. Man geht vor und zurück durch diesen Stapel.",
+  "Gesten": "Bedienung mit Wischen, Ziehen oder Drücken auf dem Bildschirm.",
+  "Push-Nachrichten": "Benachrichtigungen, die auch erscheinen, wenn die App gerade nicht offen ist.",
+  "Offline nutzbar": "Die App funktioniert auch ohne Internet, Daten werden lokal gespeichert und später synchronisiert.",
+  "Widgets": "Kleine Ansichten, die direkt auf dem Startbildschirm des Handys angezeigt werden.",
+  "Dark Mode": "Eine dunkle Farbversion der Oberfläche, die die Augen schont und Akku spart.",
+  "Onboarding": "Die ersten Bildschirme, die die App erklären, wenn man sie zum ersten Mal öffnet.",
+  "Live alle paar Sekunden": "Die Daten werden automatisch in kurzen Abständen neu geladen, ohne dass du etwas tun musst.",
+  "Per Knopfdruck": "Die Daten werden erst aktualisiert, wenn du auf einen Button drückst.",
+  "CSV-Upload": "Du lädst eine Tabellendatei (.csv) hoch, und das Dashboard zeigt deren Daten an.",
+  "CSV-Export": "Die angezeigten Daten lassen sich als Tabellendatei (.csv) herunterladen.",
+  "Sortieren": "Die Tabellenzeilen werden nach einer Spalte aufsteigend oder absteigend geordnet.",
+  "Seiten": "Lange Tabellen werden in mehrere Seiten aufgeteilt, damit sie übersichtlich bleiben.",
+  "Vergleich mit Vorperiode": "Die aktuellen Werte werden neben denen des letzten Zeitraums gezeigt, z. B. dieser Monat gegen letzten Monat.",
+  "Kennzahlen-Leiste oben": "Eine Reihe wichtiger Zahlen (KPIs) oben auf der Seite, auf einen Blick sichtbar.",
+  "Kachel-Raster": "Der Inhalt liegt in gleich großen Karten nebeneinander, ähnlich wie App-Kacheln.",
+  "Tabs": "Mehrere Ansichten, zwischen denen man über Reiter oben wechselt.",
+  "Sparklines": "Winzige Mini-Diagramme ohne Achsen, die einen Verlauf auf einen Blick zeigen.",
+  "Heatmap": "Eine Tabelle oder Fläche, in der Farbintensität zeigt, wo die Werte hoch oder niedrig sind.",
+  "Trichter": "Ein Diagramm, das zeigt, wie viele Menschen von einem Schritt zum nächsten weitergehen, z. B. vom Besuch bis zum Kauf.",
+  "Tacho": "Ein Diagramm in Form eines Tachos, das einen einzelnen Wert auf einer Skala zeigt.",
+  "Donut": "Ein Kreisdiagramm mit einem Loch in der Mitte, das Anteile zeigt.",
+  "Badge (Neu/Sale)": "Ein kleines Etikett auf dem Produkt, z. B. „Neu“ oder „Sale“.",
+  "Schnellansicht": "Ein Produkt lässt sich per Klick in einem Fenster öffnen, ohne die Seite zu verlassen.",
+  "Varianten/Größen": "Auswahl von Farbe, Größe oder anderen Ausführungen eines Produkts.",
+  "Wunschliste": "Man merkt sich Produkte für später, ohne sie zu kaufen.",
+  "Gutscheinfeld": "Ein Eingabefeld, in dem Kunden einen Rabattcode eintragen können.",
+  "Lagerbestand": "Zeigt, wie viele Stück eines Produkts noch verfügbar sind.",
+  "Zuletzt angesehen": "Eine Liste der Produkte, die man zuletzt angeschaut hat.",
+  "3D-/360°-Ansicht": "Das Produkt lässt sich drehen und von allen Seiten ansehen.",
+  "Zoom": "Bilder lassen sich vergrößern, um Details zu erkennen.",
+  "Lesezeit": "Eine Angabe, wie viele Minuten der Artikel zum Lesen braucht.",
+  "Inhaltsverzeichnis": "Eine Übersicht der Abschnitte eines langen Artikels mit Sprungmarken.",
+  "Autor-Box": "Ein kleiner Kasten am Artikel mit Infos über die Person, die ihn geschrieben hat.",
+  "Teilen-Buttons": "Schaltflächen, mit denen Leser den Artikel direkt in sozialen Netzwerken teilen können.",
+  "RSS": "Ein Format, über das Leser neue Artikel in einem Feed-Reader abonnieren können.",
+  "Countdown": "Eine Zeitanzeige, die bis zum Start eines Ereignisses rückwärts zählt.",
+  "Line-up / Sprecher": "Die Liste der Künstler oder Redner, die auftreten.",
+  "Anmeldeformular": "Ein Formular, mit dem sich Besucher direkt für das Ereignis anmelden können.",
+  "Burger-Icon mit Vollbild-Menü": "Das Drei-Striche-Symbol öffnet das Menü über den ganzen Bildschirm.",
+  "Seitliche Schublade": "Ein Menü oder Warenkorb, der von der Seite hereingleitet.",
+  "Vollbild-3D-Szene": "Ein 3D-Objekt oder eine 3D-Welt füllt den ganzen ersten Bildschirm.",
+  "Video-Hintergrund": "Ein stummes, sich wiederholendes Video läuft hinter dem Inhalt.",
+  "Interaktives Element": "Ein Bereich, mit dem Besucher spielen können, z. B. ein Regler oder ein Konfigurator.",
+  "Stimmen-Eingabe": "Eingabe per Sprache statt Tippen.",
+  "Sprache": "Eingabe per Sprache statt Tippen.",
+  "Kamera": "Die Kamera des Handys oder Laptops liefert das Bild für die Eingabe.",
+  "Foto-Upload": "Man lädt ein Foto aus der Galerie oder dem Dateisystem hoch.",
+  "Auswahl-Karten": "Antworten werden als große, anklickbare Karten statt als Liste angezeigt.",
+  "Formular mit Fragen": "Die Eingabe läuft Schritt für Schritt über Fragen mit Feldern.",
+  "Text zum Kopieren": "Das Ergebnis wird als Text angezeigt, den man mit einem Klick kopieren kann.",
+  "Diagramm": "Die Ergebnisse werden grafisch dargestellt, z. B. als Balken oder Linie.",
+  "Cookie-Hinweis": "Ein Banner, das um Zustimmung zur Speicherung von Cookies bittet. Wichtig für Datenschutz in der EU.",
+  "Mehrsprachig": "Die Seite gibt es in mehreren Sprachen, mit Umschaltung.",
+  "Chat-Button": "Ein Button, über den Besucher direkt einen Chat mit dir starten.",
+  "Newsletter": "Besucher können sich per E-Mail für regelmäßige Neuigkeiten anmelden.",
+  "Sitemap": "Eine Übersicht aller Seiten einer Website, hilft Besuchern und Suchmaschinen.",
+  "Kommentare (Platzhalter)": "Ein Bereich für Kommentare, der zunächst nur als Platzhalter angelegt wird.",
+  "Jump'n'Run": "Ein Spiel, bei dem die Spielfigur springt und läuft, um Hindernisse zu überwinden.",
+  "Clicker": "Ein Spiel, bei dem man vor allem durch Klicken Punkte oder Ressourcen sammelt.",
+  "Endless Runner": "Die Figur läuft automatisch immer weiter, und man weicht Hindernissen aus.",
+  "Tower Defense": "Man platziert Türme, um angreifende Gegner auf ihrem Weg aufzuhalten.",
+  "Power-ups": "Kurze Bonus-Fähigkeiten, die man einsammelt, z. B. schneller laufen oder unverwundbar sein.",
+  "Bossgegner": "Ein besonders starker Gegner am Ende eines Abschnitts oder Levels.",
+  "Highscore": "Die höchste erreichte Punktzahl, die gespeichert wird.",
+  "Bestenliste lokal": "Eine Rangliste der besten Punkte, gespeichert auf dem eigenen Gerät.",
+  "Pause-Menü": "Ein Menü, in dem das Spiel angehalten werden kann.",
+  "Schwierigkeitsgrade": "Auswahl zwischen leicht, mittel und schwer.",
+  "Pixel-Art": "Grafik aus sichtbaren, quadratischen Pixeln, wie bei klassischen Retro-Spielen.",
+  "Feste Level": "Die Spielabschnitte sind vorgegeben und immer gleich.",
+  "Zufällig generiert": "Die Level oder Karten entstehen bei jedem Spiel neu per Zufall.",
+  "Endlos": "Das Spiel hat keinen festen Abschluss und läuft so lange, bis man verliert.",
+  "Tastatur": "Die Steuerung erfolgt mit der Tastatur, z. B. Pfeiltasten oder WASD.",
+  "Controller": "Die Steuerung erfolgt mit einem Spiele-Controller.",
+  "Strg+K": "Ein Tastenkürzel, mit dem man sofort eine Suche öffnet.",
+  "Dashboard": "Eine Übersichtsseite, die Kennzahlen und Diagramme auf einen Blick zeigt.",
+  "Barrierefreiheit und Tastaturbedienung": "Die Seite lässt sich vollständig mit der Tastatur bedienen und ist auch für Menschen mit Einschränkungen gut nutzbar.",
+  "Performance und schnelle Ladezeit": "Die Seite lädt schnell und läuft auch auf schwachen Geräten flüssig.",
+  "Konsistenz bei Abständen, Farben und Formen": "Gleiche Elemente sehen überall gleich aus, mit festen Abständen und Farben.",
+  "Mikrointeraktionen bei jedem Klick": "Kleine Reaktionen auf Aktionen, z. B. ein Button, der kurz nachgibt.",
+  "Vertrauen durch Details wie Ladezustände und Fehlermeldungen": "Die Seite zeigt klar, was gerade passiert, und erklärt Fehler verständlich.",
+  "Skelett-Ladezustand": "Vor dem Laden erscheinen graue Platzhalterformen, die die spätere Struktur zeigen.",
+  "Ladebildschirm": "Eine kurze Animation, während die Seite lädt.",
+  "Hell/Dunkel-Schalter": "Ein Schalter, mit dem man zwischen heller und dunkler Darstellung wechselt.",
+  "Suche": "Ein Suchfeld, über das Besucher Inhalte direkt finden.",
+  "Standort-Info": "Zeigt, wo sich das Unternehmen oder der Ort befindet, meist mit Karte.",
+  "Termin buchen": "Besucher wählen direkt einen freien Termin aus.",
+  "Cookie-Hinweis ": "Ein Banner, das um Zustimmung zur Speicherung von Cookies bittet.",
+  "Dark Mode ": "Eine dunkle Farbversion der Oberfläche.",
+  "Hero": "Der große Bereich ganz oben auf der Seite, der den ersten Eindruck macht.",
+  "Burger-Icon": "Das Drei-Striche-Symbol, das ein Menü öffnet.",
+  "Wow-Moment": "Ein auffälliger Effekt, der Besucher beeindruckt und in Erinnerung bleibt.",
+  "Responsive": "Die Seite passt sich automatisch an Handy, Tablet und Desktop an.",
+  "Kontrast": "Der Unterschied zwischen hellen und dunklen Farben. Hoher Kontrast macht Text besser lesbar.",
+  "Typografie": "Die Gestaltung der Schrift: Schriftart, Größe, Abstände und Hierarchie."
+};
+
+/* ================= Experten-Tipps ================= */
+const TYPE_HINTS = {
+  _site:["Klare Hierarchie: pro Abschnitt eine Hauptaussage.","Touch-Ziele mindestens 44 px, Menü auf dem Handy gut erreichbar.","Bilder und Medien mit festem Seitenverhältnis, damit beim Laden nichts springt.","Semantisches HTML (header, nav, main, section, footer)."],
+  web:["Jeder Abschnitt endet mit einem sinnvollen nächsten Schritt für den Besucher."],
+  landing:["Ein einziges klares Ziel; der Haupt-Button taucht mehrmals auf.","Vorteile statt Funktionen beschreiben.","Einwände in einer FAQ abfangen."],
+  shop:["Produkte als Daten-Liste im Code, Karten werden daraus erzeugt.","Preis und Versand-/Abholinfo direkt am Produkt sichtbar.","Warenkorb-Zähler in der Navigation mit kleiner Animation beim Hinzufügen.","Filter ohne Neuladen, mit weichen Übergängen."],
+  portfolio:["Die Arbeiten sind der Star, das Design tritt zurück.","Jedes Projekt mit Titel, Jahr, Rolle und Kurzbeschreibung."],
+  blog:["Angenehme Lesebreite (60–75 Zeichen) und großzügige Zeilenhöhe.","Artikel als Daten im Code, Liste und Detailansicht werden daraus erzeugt."],
+  event:["Datum, Ort und Ticket-Button sofort im ersten Bildschirm sichtbar.","Countdown, der sich live aktualisiert."],
+  webapp:["Klarer Ablauf mit sichtbarem Fortschritt (z. B. Schritt 1 von 3).","Eigene Zustände für leer, lädt, Fehler und Erfolg.","Eingaben prüfen, Fehler verständlich erklären.","Ergebnis mit Kopieren-Button und Möglichkeit, neu zu starten.","API-Schlüssel nie im Frontend-Code; dafür ein kleines Backend oder einen klar markierten Platzhalter vorsehen."],
+  app:["Navigation nach den Plattform-Richtlinien.","Touch-Ziele mindestens 44×44 pt, Safe Areas (Notch, Home-Leiste) beachten.","Skelett-Ladezustände, Fehler mit „Erneut versuchen“.","Saubere Ordnerstruktur: screens, components, theme, services."],
+  dashboard:["Wichtigste Kennzahlen oben, Details darunter.","Jede Kennzahl mit Vergleich zur Vorperiode und Trend.","Zahlen mit tabellarischen Ziffern und deutschem Format (1.234,56 €).","Achsen und Tooltips beschriftet, Farben auch für Farbschwache unterscheidbar.","Beispieldaten realistisch und klar als Beispiel markiert."],
+  game:["Game-Loop mit requestAnimationFrame und Delta-Time.","Pause bei Tab-Wechsel.","Startbildschirm, Spiel und Game-Over mit Neustart.","Highscore im localStorage speichern.","Steuerung auf dem Startbildschirm erklären."]
+};
+const DESIGN_HINTS = {
+  "Glas-Look":"Glas: halbtransparente Flächen, backdrop-filter: blur(16–24px) saturate(150%), feiner heller Rand, weiche Schatten; dahinter farbige Verläufe, damit der Effekt sichtbar wird. Fallback ohne Blur einbauen.",
+  "Minimalistisch":"Minimalismus: wenige Elemente, viel Weißraum, maximal zwei Schriftgrößen pro Abschnitt.",
+  "Brutalistisch":"Brutalismus: harte Kanten, sichtbares Raster, kräftige Kontraste, bewusst rohe Typo.",
+  "Streetwear":"Streetwear: fette, enge Typo, Kontraste, Labels und Badges wie auf Verpackungen.",
+  "Luxus":"Luxus: viel Ruhe, feine Linien, elegante Serifen, langsame Animationen.",
+  "Retro / Y2K":"Y2K: Chrom-Effekte, Glanz, Sterne und abgerundete Pixel-Details.",
+  "Futuristisch":"Futuristisch: präzise Linien, leuchtende Akzente, technische Details.",
+  "Editorial / Magazin":"Editorial: Raster wie ein Magazin, große Bildausschnitte, starke Typo-Kontraste.",
+  "Mesh-Verlauf":"Mesh-Verlauf: mehrere weiche radiale Verläufe übereinander, gern langsam animiert.",
+  "Animierter Verlauf":"Animierter Verlauf: langsam und ruhig, damit er nicht vom Inhalt ablenkt.",
+  "Körnung (Grain)":"Grain: feines Rausch-Overlay per SVG oder CSS, sehr dezent, pointer-events: none.",
+  "Holografischer Schimmer":"Holo-Schimmer: Regenbogen-Verlauf, der sich mit Maus oder Scroll verschiebt.",
+  "Neumorph (weich gedrückt)":"Neumorph: weiche Doppelschatten, ausreichend Kontrast für Lesbarkeit."
+};
+
+/* ================= Zustand ================= */
+const KEY = "prompt-schmiede-v3";
+let A = {}, cur = 0, seeds = [], aiResults = [];
+const byId = Object.fromEntries(Q.map(q=>[q.id,q]));
+function blank(q){ return {sel: q.setting ? [q.def] : [], own:"", text:"", val: q.type==="range" ? q.def : null}; }
+function initState(src){
+  A = {}; Q.forEach(q => { A[q.id] = Object.assign(blank(q), src && src[q.id] ? JSON.parse(JSON.stringify(src[q.id])) : {}); });
+  if(!A.modell.sel.length) A.modell.sel = ["opus"];
+  A.__touched = (src && src.__touched) ? {...src.__touched} : {};
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify({A, cur, seeds})); }catch(e){} }
+function load(){ try{ const r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null; }catch(e){ return null; } }
+
+/* ================= Lesen ================= */
+function typeObj(){ const l = A.typ && A.typ.sel[0]; return TYPES.find(t=>t.l===l) || null; }
+function tk(){ const t = typeObj(); return t ? t.k : null; }
+function visible(q){ const t = tk(); if(q.for){ if(!t || !q.for.includes(t)) return false; } if(q.not && t && q.not.includes(t)) return false; return true; }
+function bankList(b){ return b==="WOW" ? WOW[wowCat()] : b==="DIRECTIONS" ? DIRECTIONS : EMPH; }
+function optsOf(q){ if(q.bank) return ["Zufall (automatisch)", ...bankList(q.bank)]; if(q.optsBy){ const t = tk(); return q.optsBy[t] || q.optsBy.default; } return q.opts || []; }
+function v(id){
+  const q = byId[id], a = A[id]; if(!q || !a || !visible(q)) return "";
+  if(q.type==="text" || q.type==="textarea") return (a.text||"").trim();
+  if(q.type==="range") return q.steps[a.val];
+  if(q.type==="model") return a.sel[0] || "";
+  const o = optsOf(q); return [...a.sel.filter(x=>o.includes(x)), (a.own||"").trim()].filter(Boolean).join(", ");
+}
+function has(id, opt){ const q = byId[id]; return !!(q && visible(q) && A[id].sel.includes(opt) && optsOf(q).includes(opt)); }
+function setv(id){ return A[id].sel[0] || byId[id].def; }
+function isFilled(q){
+  if(q.type==="range") return !!A.__touched[q.id];
+  if(q.type==="model") return A[q.id].sel.length>0;
+  return !!v(q.id);
+}
+function countable(){ return Q.filter(q => !q.setting && visible(q)); }
+
+/* ================= Navigation & Fragen ================= */
+const elSt = document.getElementById("stations"), elMain = document.getElementById("main");
+function el(tag, cls, txt){ const e = document.createElement(tag); if(cls) e.className = cls; if(txt!=null) e.textContent = txt; return e; }
+function secTitle(s){ if(s.id==="aufbau"){ const t = typeObj(); return t ? "Aufbau: " + t.l : "Aufbau"; } return s.title; }
+function renderStations(){
+  elSt.innerHTML = "";
+  SECTIONS.forEach((s,i) => {
+    const qs = Q.filter(q => q.s===s.id && visible(q) && !q.setting), done = qs.filter(isFilled).length;
+    const b = el("button","station" + (s.special?" special":"") + (qs.length && done===qs.length ? " done":"")); b.type = "button";
+    if(i===cur) b.setAttribute("aria-current","step");
+    const no = el("span","no", s.id==="ergebnis" ? "✦" : s.id==="einstellungen" ? "⚙" : String(i+1).padStart(2,"0"));
+    b.append(no, el("span","nm", s.id==="aufbau" && typeObj() ? "Aufbau " + typeObj().l.split(" ")[0] : s.name));
+    if(qs.length) b.appendChild(el("span","ct", done + "/" + qs.length));
+    b.onclick = () => go(i); elSt.appendChild(b);
+  });
+  const all = countable(), done = all.filter(isFilled).length;
+  document.getElementById("meterTxt").textContent = done + " / " + all.length;
+  document.getElementById("meterFill").style.width = (all.length ? Math.round(done/all.length*100) : 0) + "%";
+}
+function go(i){ cur = Math.max(0, Math.min(SECTIONS.length-1, i)); save(); render(); window.scrollTo({top:0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"}); }
+
+function renderQuestion(q){
+  const a = A[q.id], card = el("div","q glass" + (isFilled(q) ? " filled" : ""));
+  const refresh = () => { card.classList.toggle("filled", isFilled(q)); renderStations(); save(); };
+  if(q.type==="text" || q.type==="textarea"){
+    const l = el("label","ql",q.label); l.htmlFor = "f-"+q.id; card.appendChild(l);
+    if(q.hint) card.appendChild(el("p","hint",q.hint));
+    const f = el(q.type==="text" ? "input" : "textarea"); if(q.type==="text") f.type = "text";
+    f.id = "f-"+q.id; f.placeholder = q.ph || ""; f.value = a.text || "";
+    f.oninput = () => { a.text = f.value; refresh(); }; card.appendChild(f); return card;
+  }
+  if(q.type==="range"){
+    const l = el("label","ql",q.label); l.htmlFor = "f-"+q.id; card.appendChild(l);
+    const row = el("div","range-row"), r = el("input"), o = el("output");
+    r.type = "range"; r.id = "f-"+q.id; r.min = q.min; r.max = q.max; r.step = 1; r.value = a.val; o.textContent = q.steps[a.val];
+    r.oninput = () => { a.val = +r.value; o.textContent = q.steps[a.val]; A.__touched[q.id] = true; refresh(); };
+    row.append(r,o); card.appendChild(row);
+    const t = el("div","ticks"); q.steps.forEach(s => t.appendChild(el("span",null,s))); card.appendChild(t); return card;
+  }
+  if(q.type==="model"){
+    card.appendChild(el("div","ql",q.label));
+    const g = el("div","models"); g.setAttribute("role","radiogroup");
+    MODELS.forEach(m => {
+      const b = el("button","model"); b.type = "button"; b.setAttribute("role","radio"); b.id = "f-modell-"+m.id;
+      b.setAttribute("aria-checked", a.sel[0]===m.id ? "true" : "false");
+      const d = el("span","dots"); d.append("Stärke "); for(let i=1;i<=5;i++) d.appendChild(el("i", i<=m.power ? "on" : null));
+      b.append(el("span","mn",m.name), el("span","tag " + (m.cost?"cost":"free"), m.tag), d, el("span","md",m.desc));
+      b.onclick = () => { a.sel = [m.id]; g.querySelectorAll(".model").forEach(x => x.setAttribute("aria-checked", x===b ? "true" : "false")); refresh(); if(drawCmpFn) drawCmpFn(); };
+      g.appendChild(b);
+    });
+    card.appendChild(g);
+    const cmp = el("div","cmp"); drawCmpFn = () => { cmp.innerHTML = ""; cmp.appendChild(modelCompare()); }; drawCmpFn(); card.appendChild(cmp); return card;
+  }
+  card.appendChild(el("div","ql",q.label));
+  if(q.hint) card.appendChild(el("p","hint",q.hint));
+  if(q.type==="multi") card.appendChild(el("div","multi-note","Mehrere möglich"));
+  const chips = el("div","chips"), opts = optsOf(q);
+  opts.forEach(opt => {
+    const c = el("button","chip",opt); c.type = "button"; c.setAttribute("aria-pressed", a.sel.includes(opt) ? "true" : "false");
+    c.onclick = () => {
+      if(q.type==="single"){
+        a.sel = (a.sel.includes(opt) && !q.setting) ? [] : [opt];
+        chips.querySelectorAll(".chip").forEach(x => x.setAttribute("aria-pressed", a.sel.includes(x.textContent) ? "true" : "false"));
+      } else {
+        a.sel = a.sel.includes(opt) ? a.sel.filter(x=>x!==opt) : [...a.sel, opt];
+        c.setAttribute("aria-pressed", a.sel.includes(opt) ? "true" : "false");
+      }
+      if(q.id==="typ"){ save(); render(); return; }
+      if(q.setting) seeds = [];
+      refresh();
+    };
+    chips.appendChild(c);
+  });
+  card.appendChild(chips);
+  const glos = opts.filter(o => GLOSS[o.trim()] || GLOSS[o]);
+  if(glos.length){
+    const d = el("details","gl"); d.appendChild(el("summary",null,"Was bedeuten die Begriffe?"));
+    glos.forEach(o => { const row = el("p",null,null); row.append(el("b",null,o), " – " + (GLOSS[o] || GLOSS[o.trim()])); d.appendChild(row); });
+    card.appendChild(d);
+  }
+  if(q.own){
+    const w = el("div","own"), f = el("input"); f.type = "text"; f.id = "f-"+q.id;
+    f.placeholder = q.ownPh || "Eigene Antwort …"; f.value = a.own || ""; f.setAttribute("aria-label", q.label + " – eigene Antwort");
+    f.oninput = () => { a.own = f.value; refresh(); };
+    w.appendChild(f); card.appendChild(w);
+  }
+  return card;
+}
+
+function render(){
+  renderStations();
+  const s = SECTIONS[cur]; elMain.innerHTML = "";
+  const head = el("div","sec-head");
+  head.appendChild(el("div","eyebrow", s.id==="ergebnis" ? "Fertig" : s.id==="einstellungen" ? "Generator" : "Schritt " + (cur+1) + " von " + (SECTIONS.length-2)));
+  head.appendChild(el("h2",null,secTitle(s))); head.appendChild(el("p",null,s.sub));
+  elMain.appendChild(head);
+  if(s.id==="ergebnis") renderResults();
+  else {
+    if(s.id==="start") elMain.appendChild(howCard());
+    const qs = el("div","qs"), list = Q.filter(q => q.s===s.id && visible(q));
+    if(!list.length){ const e = el("div","empty glass"); e.appendChild(el("p",null, s.id==="aufbau" ? "Wähl zuerst bei „Start“ aus, was du baust. Dann erscheinen hier die passenden Fragen." : "Für deine Projektart gibt es hier keine Fragen.")); qs.appendChild(e); }
+    list.forEach(q => qs.appendChild(renderQuestion(q)));
+    elMain.appendChild(qs);
+  }
+  const pager = el("div","pager");
+  const back = el("button","btn ghost","← Zurück"); back.type = "button"; back.disabled = cur===0; back.onclick = () => go(cur-1); pager.appendChild(back);
+  if(s.id!=="ergebnis"){
+    const last = cur===SECTIONS.length-2;
+    const next = el("button", last ? "btn coral" : "btn primary", last ? "Prompts erstellen ✦" : "Weiter →");
+    next.type = "button"; next.onclick = () => go(cur+1); pager.appendChild(next);
+  }
+  elMain.appendChild(pager);
+}
+
+/* ================= Prompt-Generator ================= */
+const ANIM = ["Keine Animationen, nur ein ruhiges, sauberes Layout.","Dezent: sanftes Einblenden, kleine Hover-Effekte.","Mittel: Animationen an den wichtigen Stellen, ein paar gezielte Effekte.","Viel Bewegung: aufwendige Animationen und ein klarer Wow-Moment.","Extrem: Effekte auf Award-Niveau, Scroll-Story, 3D und Kamerafahrten, trotzdem flüssig."];
+function modelObj(){ return MODELS.find(m=>m.id===(A.modell.sel[0]||"opus")) || MODELS[1]; }
+function what(){ const t = typeObj(); return t ? t.l : "Website"; }
+function art(){ const t = typeObj(); return t ? t.art : "eine"; }
+function nm(){ return v("name") || "[NAME]"; }
+function wowCat(){ const t = tk(); return t==="app" ? "app" : t==="dashboard" ? "dashboard" : t==="game" ? "game" : "web"; }
+function roleKey(){
+  const r = setv("set_rolle");
+  const map = {"Creative Developer":"creative","Designer + Entwickler":"designer","Software-Engineer":"engineer","Geduldiger Lehrer":"teacher","Agentur-Team":"team","Game-Developer":"game"};
+  if(map[r]) return map[r];
+  const t = tk();
+  if(t==="game") return "game";
+  if(t==="app" || t==="dashboard") return "engineer";
+  if(v("erfahrung")==="Anfänger" && v("erklaerung")==="Ausführlich erklären") return "teacher";
+  if(t==="webapp") return A.staerke.val>=3 ? "designer" : "engineer";
+  return "creative";
+}
+function creative(){ return setv("set_kreativ"); }
+function radices(){
+  const strict = creative()==="Streng nach Vorgaben";
+  return [ROLES[roleKey()].length, OPENERS.length, ORDERS.length, strict?1:DIRECTIONS.length, strict?1:WOW[wowCat()].length, EMPH.length, EMPH.length-1, CLOSERS.length, QUALITY.length];
+}
+function totalVariants(){ return radices().reduce((x,y)=>x*y, 1); }
+function decode(seed){
+  const r = radices(); let idx = (seed-1) % totalVariants(); const p = [];
+  for(const x of r){ p.push(idx % x); idx = Math.floor(idx / x); }
+  const e2 = (p[5] + 1 + p[6]) % EMPH.length;
+  const Z="Zufall (automatisch)";
+  const rv=v("richtung"), wv=v("wowsel"), fv=v("fokus");
+  let dir = r[3]>1 ? DIRECTIONS[p[3]] : null; if(r[3]>1 && rv && rv!==Z) dir = rv;
+  let wow = r[4]>1 ? WOW[wowCat()][p[4]] : null; if(r[4]>1 && wv && wv!==Z) wow = wv;
+  let emph=[EMPH[p[5]], EMPH[e2]]; if(fv && fv!==Z){ emph=[fv, EMPH[p[5]]===fv ? EMPH[e2] : EMPH[p[5]]]; if(emph[1]===fv) emph[1]=EMPH.find(x=>x!==fv); }
+  return {role:ROLES[roleKey()][p[0]], opener:OPENERS[p[1]], order:ORDERS[p[2]], dir, wow, emph, closer:CLOSERS[p[7]], quality:QUALITY[p[8]]};
+}
+function randSeed(){ return 1 + Math.floor(Math.random() * totalVariants()); }
+function detail(){ let d = setv("set_detail"); if(setv("set_sparen")==="An" && d==="Extrem") d = "Ausführlich"; return d; }
+function lvl(){ return ["Kurz","Normal","Ausführlich","Extrem"].indexOf(detail()); }
+function listFromText(t){ return t.split(/\n+/).map(x=>x.trim()).filter(Boolean).map(x=>"- " + x.replace(/^[-•*]\s*/,"")); }
+function isApp(){ return tk()==="app"; }
+function single(){ return has("tech","Eine einzige HTML-Datei"); }
+
+function sectionLines(sec){
+  const out = [];
+  Q.filter(q => q.s===sec && visible(q) && !q.setting && !q.bank && q.type!=="model" && q.id!=="typ").forEach(q => {
+    const val = v(q.id); if(!val) return;
+    if(q.type==="range"){ if(A.__touched[q.id] || sec==="animation") out.push("- " + (q.p||q.label) + ": " + ANIM[A[q.id].val]); return; }
+    if(q.type==="textarea"){ out.push((q.p||q.label) + ":"); out.push(...(val.includes("\n") ? listFromText(val) : [val])); return; }
+    out.push("- " + (q.p || q.label.replace(/\?$/,"")) + ": " + val);
+  });
+  return out;
+}
+function expertLines(){
+  const t = tk(), out = [];
+  if(t && SITE.includes(t)) out.push(...TYPE_HINTS._site);
+  if(t && TYPE_HINTS[t]) out.push(...TYPE_HINTS[t]);
+  [...A.stil.sel, A.hintergrund.sel[0], ...A.textur.sel, A.schatten.sel[0]].forEach(k => { if(k && DESIGN_HINTS[k]) out.push(DESIGN_HINTS[k]); });
+  const libs = v("libs"), d3 = v("dreid") && v("dreid")!=="Kein 3D";
+  if(/Three\.js/.test(libs) || d3) out.push("Three.js: setPixelRatio(Math.min(devicePixelRatio, 2)), Render-Loop pausieren, wenn die Szene nicht sichtbar ist, bei Resize Kamera und Renderer anpassen.");
+  if(/GSAP/.test(libs)) out.push("GSAP ScrollTrigger: scrub für scrollgebundene Animationen, Pinning nur wo nötig, nach dem Laden ScrollTrigger.refresh().");
+  if(/Lenis/.test(libs)) out.push("Lenis mit ScrollTrigger synchronisieren (lenis.on('scroll', ScrollTrigger.update) und gsap.ticker).");
+  if(has("reduced","Ja, dann Animationen reduzieren")) out.push("prefers-reduced-motion: Kamerafahrten und Smooth Scroll aus, nur sanftes Einblenden.");
+  if(v("mobil_anim")==="Abgespeckt" || v("mobil_anim")==="Ohne 3D") out.push("Auf dem Handy: " + v("mobil_anim") + " (weniger Partikel, einfachere Effekte).");
+  return out.map(x => "- " + x);
+}
+function ruleLines(m, mode){
+  const r = [], steps = has("lieferung","Schritt für Schritt");
+  if(!steps){
+    if(has("lieferung","Erst Plan, dann Code")) r.push("Schreib zuerst einen kurzen Plan (max. 12 Zeilen) und direkt danach den kompletten Code in derselben Antwort.");
+    else r.push("Gib den KOMPLETTEN Code aus. Keine Platzhalter wie „// Rest hier“, nichts abkürzen.");
+  }
+  if(has("rueckfragen","Ja, erst fragen, dann bauen")) r.push("Stell mir zuerst bis zu 5 kurze Rückfragen und warte auf meine Antwort.");
+  else r.push("Keine Rückfragen. Wenn etwas fehlt, entscheide selbst und nenne deine Entscheidungen kurz am Ende.");
+  if(single()) r.push("Alles in EINER Datei index.html (HTML, CSS, JS inline), Bibliotheken per CDN mit fester Versionsnummer. Muss per Doppelklick lokal laufen.");
+  else if(has("dateien","Möglichst eine Datei")) r.push("Möglichst wenige Dateien, idealerweise eine.");
+  else if(has("dateien","Mehrere Dateien mit Ordnerstruktur")) r.push("Zeig zuerst die Ordnerstruktur, dann jede Datei vollständig mit Dateinamen als Überschrift.");
+  if(v("kommentare")==="Keine") r.push("Keine Kommentare im Code."); else if(v("kommentare")) r.push("Kommentare im Code auf " + v("kommentare") + ", kurz und klar.");
+  if(v("anpassbar")) r.push("Leicht änderbar: " + v("anpassbar") + ". Diese Werte ganz oben in einem Bereich „HIER ANPASSEN“ sammeln.");
+  if(setv("set_platzhalter")==="Als [PLATZHALTER] markieren") r.push("Wo Inhalte fehlen: als [PLATZHALTER] in eckigen Klammern markieren.");
+  else r.push("Wo Inhalte fehlen: passende, realistische Beispieltexte erfinden (keine Lorem-Ipsum-Texte), aber keine erfundenen Kundenbewertungen.");
+  const ex = v("erklaerung");
+  if(ex==="Nur Code") r.push("Außer dem Code höchstens 2 Sätze.");
+  else if(ex==="Kurze Anleitung") r.push("Nach dem Code eine kurze Anleitung (max. 8 Punkte): starten, und wo man Texte, Farben, Inhalte ändert.");
+  else if(ex==="Ausführlich erklären") r.push("Nach dem Code verständlich erklären, wie alles funktioniert, wie man es startet und ändert.");
+  if(v("erfahrung")==="Anfänger") r.push("Ich bin Anfänger: kein Fachchinesisch, sag genau, was ich klicken oder eingeben muss.");
+  if(v("erfahrung")==="Profi") r.push("Ich bin Profi: keine Grundlagen erklären.");
+  if(has("deploy","Ja")) r.push("Am Ende eine kurze Schritt-für-Schritt-Anleitung zum Online-Stellen" + (v("hosting") ? " (" + v("hosting") + ")" : "") + ".");
+  if(has("ideen","Ja, 3 Ideen")) r.push("Zum Schluss 3 konkrete Ideen, wie man es noch besser machen kann.");
+  if(has("pruefen","Ja")) r.push("Prüfe vor der Ausgabe: keine Syntaxfehler, keine undefinierten Variablen, alle IDs/Klassen stimmen, keine Konsolenfehler" + (isApp() ? "." : ", kein horizontales Scrollen auf dem Handy."));
+  if(m.id==="fable") r.push("Denk gründlich nach und liefere das Ergebnis vollständig in EINER Antwort.");
+  if(m.id==="opus") r.push("Wo meine Angaben fehlen, triff mutige, stimmige Entscheidungen.");
+  if(m.id==="sonnet") r.push("Arbeite die Abschnitte der Reihe nach ab und lass keinen aus.");
+  if(m.id==="haiku") r.push("Halte die Umsetzung schlank: lieber weniger Effekte, die sicher funktionieren.");
+  if(setv("set_sparen")==="An" || m.id==="fable") r.push("Halte Text außerhalb des Codes knapp.");
+  r.push("Keine echten Markenlogos oder geschützten Namen.");
+  return r.map(x => "- " + x);
+}
+function checkLines(){
+  const c = ["Läuft ohne Fehler"];
+  if(!isApp()) c.push("Sieht auf Handy (375 px) und PC (1440 px) gut aus");
+  ["seiten","wa_screens","app_screens","db_charts","g_features","funktionen","app_features"].forEach(id => { if(v(id)) c.push(byId[id].p + " vollständig: " + v(id)); });
+  if(v("effekte")) c.push("Effekte funktionieren beim Vor- und Zurückscrollen");
+  if(v("muss")) c.push("Alle Muss-Punkte umgesetzt");
+  if(v("nogo")) c.push("Kein No-Go verletzt");
+  c.push("Code vollständig, nichts abgekürzt");
+  return c.map(x => "[ ] " + x);
+}
+function qualityLines(pick){
+  const q = [pick.quality];
+  if(isApp()) q.push("Flüssige 60 fps, keine unnötigen Neu-Renderings, schneller Start.");
+  else q.push("Schnell: Lighthouse-Performance über 90 anpeilen, Bilder/Assets sparsam, nichts blockiert das Rendern.");
+  q.push("Randfälle bedenken: sehr lange Texte, leere Listen, langsames Netz, kleine und große Bildschirme.");
+  q.push("Keine Layout-Sprünge beim Laden, logische Fokus-Reihenfolge, sichtbarer Fokus.");
+  q.push("Einheitliches System für Abstände (8er-Raster), Farben und Schriftgrößen.");
+  return q.map(x => "- " + x);
+}
+const BLOCK_TITLES = {projekt:"Projekt", aufbau:"Aufbau", inhalt:"Inhalt", design:"Design", animation:"Animation & 3D", experten:"Experten-Hinweise", kreativ:"Kreative Richtung", technik:"Technik", wuensche:"Meine Wünsche", ablauf:"Ablauf", regeln:"So sollst du antworten", qualitaet:"Qualitätsanspruch", check:"Checkliste (vor der Ausgabe prüfen)"};
+const XML_TAGS = {projekt:"projekt", aufbau:"aufbau", inhalt:"inhalt", design:"design", animation:"animation", experten:"experten_hinweise", kreativ:"kreative_richtung", technik:"technik", wuensche:"wuensche", ablauf:"ablauf", regeln:"antwort_regeln", qualitaet:"qualitaet", check:"checkliste"};
+
+function buildPrompt(seed){
+  const m = modelObj(), pick = decode(seed), L = lvl(), t = typeObj();
+  const opener = pick.opener.replace("{art} ", art() + " ").replace("{art}", art()).replace("{what}", what()).replace("{name}", nm());
+  if(L===0) return compactPrompt(pick, opener);
+  const blocks = [];
+  const projekt = [...sectionLines("start").filter(x => !x.startsWith("- Projektart")), ...sectionLines("projekt")];
+  if(t) projekt.unshift("- Art: " + t.l);
+  blocks.push(["projekt", projekt]);
+  pick.order.forEach(k => { const lines = sectionLines(k); if(k==="aufbau" && !lines.length) return; blocks.push([k, lines]); });
+  if(L>=2 && setv("set_experten")==="An"){ const ex = expertLines(); if(ex.length) blocks.push(["experten", ex]); }
+  const kr = [];
+  if(pick.dir) kr.push("- " + (creative()==="Viel Freiheit" ? "Designrichtung (du darfst sie frei interpretieren): " : "Designrichtung als Inspiration, passend zu meinen Vorgaben: ") + pick.dir + ".");
+  if(pick.wow) kr.push("- Ein Wow-Moment: " + pick.wow + ".");
+  kr.push("- Lege besonderen Wert auf " + pick.emph[0] + " und " + pick.emph[1] + ".");
+  if(creative()==="Viel Freiheit") kr.push("- Du hast viel kreative Freiheit. Überrasch mich, solange meine Muss-Punkte und No-Gos eingehalten werden.");
+  if(creative()==="Streng nach Vorgaben") kr.push("- Halte dich exakt an meine Vorgaben und erfinde keine zusätzlichen Features.");
+  blocks.push(["kreativ", kr]);
+  blocks.push(["technik", sectionLines("technik")]);
+  const w = [];
+  if(v("muss")) w.push("Das MUSS rein:", ...listFromText(v("muss")));
+  if(v("nogo")) w.push("Auf KEINEN Fall:", ...listFromText(v("nogo")));
+  if(v("beispiele")) w.push("Beispielinhalte:", v("beispiele"));
+  if(v("frei")) w.push("In meinen eigenen Worten:", v("frei"));
+  blocks.push(["wuensche", w]);
+  if(has("lieferung","Schritt für Schritt")){
+    const st = isApp() ? ["Plan: Screens, Navigation, Datenmodell, Ordnerstruktur","Grundgerüst und Design-System","Alle Screens mit Inhalt","Funktionen und Animationen","Feinschliff, Fehler prüfen, Anleitung"]
+      : tk()==="dashboard" ? ["Plan: Layout, Kennzahlen, Diagramme, Datenstruktur","Grundgerüst, Design-System und Beispieldaten","Kennzahlen und Diagramme","Filter, Tabellen und Interaktion","Feinschliff, Fehler prüfen, Anleitung"]
+      : tk()==="game" ? ["Plan: Spielmechanik, Steuerung, Zustände","Game-Loop, Spieler und Steuerung","Gegner, Level und Punkte","Effekte, Sound, Menüs","Feinschliff, Balancing, Fehler prüfen"]
+      : ["Plan: Aufbau, Farben, Schriften, Effekte","Grundgerüst, Design-System, Navigation, responsive Layout","Alle Abschnitte mit Inhalt","Animationen, Scroll-Effekte und 3D","Feinschliff, Handy-Optimierung, Fehler prüfen, Anleitung"];
+    blocks.push(["ablauf", [...st.map((x,i)=>(i+1)+". "+x), "- Mach jetzt NUR Schritt 1. Am Ende jedes Schritts schreibst du „Bereit für Schritt X“ und wartest auf mein „weiter“.", "- Ab Schritt 2 immer den kompletten aktuellen Code jeder geänderten Datei."]]);
+  }
+  blocks.push(["regeln", ruleLines(m)]);
+  if(L>=3) blocks.push(["qualitaet", qualityLines(pick)]);
+  if(L>=2 && setv("set_check")==="An") blocks.push(["check", checkLines()]);
+  let closer = pick.closer;
+  if(has("rueckfragen","Ja, erst fragen, dann bauen")) closer = "Starte mit deinen Rückfragen.";
+  else if(has("lieferung","Schritt für Schritt")) closer = "Starte jetzt mit Schritt 1.";
+  return format(pick.role + "\n" + opener, blocks.filter(b => b[1].length), closer);
+}
+function compactPrompt(pick, opener){
+  const keys = ["pitch","ziel","zielgruppe","seiten","wa_funktion","app_screens","db_kpis","g_genre","stil","modus","hauptfarbe","akzent","effekte","dreid","objekt3d","tech","sprache","ton"];
+  const lines = keys.map(id => { const q = byId[id], val = v(id); return val ? "- " + (q.p||q.label) + ": " + val.replace(/\n+/g,"; ") : ""; }).filter(Boolean);
+  if(v("idee")) lines.unshift("Idee: " + v("idee"));
+  lines.push("- Animation: " + ANIM[A.staerke.val]);
+  if(pick.dir) lines.push("- Richtung: " + pick.dir);
+  if(pick.wow) lines.push("- Wow-Moment: " + pick.wow);
+  if(v("muss")) lines.push("- Muss rein: " + v("muss").replace(/\n+/g,"; "));
+  if(v("nogo")) lines.push("- Nicht: " + v("nogo").replace(/\n+/g,"; "));
+  if(v("frei")) lines.push("- Außerdem: " + v("frei"));
+  lines.push("Regeln: responsiv, flüssig, barrierearm, kompletter Code ohne Abkürzungen" + (has("rueckfragen","Ja, erst fragen, dann bauen") ? ", vorher bis zu 3 Rückfragen" : ", keine Rückfragen") + (single() ? ", alles in einer index.html" : "") + ". Keine echten Markenlogos, keine erfundenen Bewertungen.");
+  return opener + "\n" + lines.join("\n");
+}
+function format(intro, blocks, closer){
+  const f = setv("set_format");
+  let body;
+  if(f==="XML-Tags"){
+    body = blocks.map(([k,lines]) => "<" + XML_TAGS[k] + ">\n" + lines.join("\n") + "\n</" + XML_TAGS[k] + ">").join("\n\n");
+  } else if(f==="Klartext"){
+    body = blocks.map(([k,lines]) => BLOCK_TITLES[k].toUpperCase() + "\n" + lines.map(x => x.replace(/^- /,"• ")).join("\n")).join("\n\n");
+  } else if(f==="Nummeriert"){
+    body = blocks.map(([k,lines],i) => { let j = 0; return (i+1) + ". " + BLOCK_TITLES[k] + "\n" + lines.map(x => x.startsWith("- ") ? "   " + (i+1) + "." + (++j) + " " + x.slice(2) : "   " + x).join("\n"); }).join("\n\n");
+  } else {
+    body = blocks.map(([k,lines]) => "## " + BLOCK_TITLES[k] + "\n" + lines.join("\n")).join("\n\n");
+  }
+  return intro + "\n\n" + body + "\n\n" + closer;
+}
+
+/* ================= Ergebnis ================= */
+const fmt = n => n.toLocaleString("de-DE");
+function approxTokens(s){ return Math.round(s.length/3.6); }
+function copyBtn(getText){
+  const b = el("button","btn primary small","Kopieren"); b.type = "button";
+  b.onclick = async () => {
+    try{ await navigator.clipboard.writeText(getText()); b.textContent = "Kopiert ✓"; }
+    catch(e){ const pre = b.closest(".variant")?.querySelector("pre"); if(pre){ const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } b.textContent = "Markiert, jetzt Strg+C"; }
+    setTimeout(() => { b.textContent = "Kopieren"; }, 2200);
+  };
+  return b;
+}
+/* Grobe Verbrauchsschätzung. Werte oben anpassbar, Anthropic nennt keine festen Limits. */
+const USAGE = {session:1000000, weekFactor:10, low:0.5, high:2,
+  out:{web:14000,landing:10000,shop:18000,portfolio:14000,blog:12000,event:11000,webapp:16000,app:22000,dashboard:16000,game:14000},
+  weight:{haiku:0.33,sonnet:1,opus:1.67}, price:{inp:10,out:50}};
+function usageEstimate(text){
+  const m = modelObj(), inTok = approxTokens(text);
+  const outTok = Math.round((USAGE.out[tk()] || 12000) * (0.7 + 0.15 * A.staerke.val));
+  if(m.id==="fable"){ const usd = (inTok*USAGE.price.inp + outTok*USAGE.price.out)/1e6; return {fable:true, lo:usd*0.6, hi:usd*1.6, inTok, outTok}; }
+  const s = (inTok + 5*outTok) * USAGE.weight[m.id] / USAGE.session * 100, w = s / USAGE.weekFactor;
+  return {fable:false, s, sLo:s*USAGE.low, sHi:s*USAGE.high, w, wLo:w*USAGE.low, wHi:w*USAGE.high, inTok, outTok};
+}
+function pct(x){ x = Math.min(100, x); return x.toLocaleString("de-DE", {maximumFractionDigits: x<10 ? 1 : 0}); }
+function usageBox(text){
+  const u = usageEstimate(text), box = el("div","usage");
+  box.appendChild(el("h4",null,"Geschätzter Verbrauch (grob)"));
+  const row = (label, mid, lo, hi) => {
+    const r = el("div","urow"), bar = el("div","ubar"), f = el("i"); f.style.width = Math.min(100, mid) + "%"; bar.appendChild(f);
+    r.append(el("span",null,label), bar, el("b",null,"ca. " + pct(lo) + "–" + pct(hi) + " %")); return r;
+  };
+  if(u.fable){
+    const usd = x => x.toLocaleString("de-DE", {minimumFractionDigits:2, maximumFractionDigits:2}) + " $";
+    const r = el("div","urow"); r.append(el("span",null,"Kosten (Guthaben)"), el("span"), el("b",null,"ca. " + usd(u.lo) + "–" + usd(u.hi)));
+    box.appendChild(r);
+    box.appendChild(el("p","unote","Fable zählt beim Pro-Plan nicht gegen dein 5-Stunden- oder Wochenlimit, sondern geht von deinem Nutzungsguthaben ab."));
+  } else {
+    box.appendChild(row("5-Stunden-Limit", u.s, u.sLo, u.sHi));
+    box.appendChild(row("Wochenlimit", u.w, u.wLo, u.wHi));
+  }
+  box.appendChild(el("p","unote","Schätzung für die erste Antwort (ca. " + fmt(u.inTok) + " Tokens rein, " + fmt(u.outTok) + " raus). Anthropic nennt keine festen Limits, die echte Zahl kann deutlich abweichen. Jede Änderungsrunde kommt dazu."));
+  return box;
+}
+/* Direkt bauen: Claude erstellt das Projekt hier über das Pro-Konto (sample) */
+function freshGen(){ return {text:"", truncated:false, running:false, ctl:null, sel:0, tab:"code"}; }
+let gen = freshGen(), ui = {};
+const BUILD_HTML = "Setze das folgende Briefing sofort um. Liefere die komplette Lösung als EINE vollständige index.html in genau einem ```html-Codeblock. Vor und nach dem Codeblock höchstens zwei Sätze. Stelle keine Rückfragen und liefere alles in dieser einen Antwort, auch wenn im Briefing von Schritten oder Rückfragen die Rede ist.\n\nBriefing:\n\n";
+const BUILD_MULTI = "Setze das folgende Briefing sofort um. Liefere alle Dateien vollständig in Codeblöcken, jede mit dem Dateinamen als Überschrift davor. Stelle keine Rückfragen und liefere alles in dieser einen Antwort, auch wenn im Briefing von Schritten oder Rückfragen die Rede ist.\n\nBriefing:\n\n";
+function htmlMode(){ return single() || (!v("tech") && !isApp()); }
+function extractCode(t){ const m = t.match(/```[a-zA-Z]*\n([\s\S]*?)(```|$)/); return m ? m[1] : t; }
+function shownCode(){ return htmlMode() ? extractCode(gen.text) : gen.text; }
+function allPrompts(){ return [...seeds.map(s => ({label:"Variante #" + fmt(s), text:buildPrompt(s)})), ...aiResults.map(r => ({label:r.titel, text:r.prompt}))]; }
+function joinCont(base, t){ return base + t.replace(/^\s*```[a-zA-Z]*\n/, ""); }
+function setStatus(t){ if(ui.status) ui.status.textContent = t; }
+function drawPreview(){
+  const code = shownCode(), ok = /<!doctype html|<html/i.test(code);
+  ui.note.hidden = ok; ui.frame.hidden = !ok;
+  if(ok && ui.frame.dataset.len !== String(code.length)){ ui.frame.dataset.len = String(code.length); ui.frame.srcdoc = code; }
+}
+function refreshBuild(){
+  if(!ui.code) return;
+  const code = shownCode();
+  ui.code.textContent = code || "Noch nichts erstellt. Tippe auf „Erstellen“.";
+  ui.copy.disabled = !code; ui.cont.hidden = !(gen.truncated && !gen.running); ui.stop.hidden = !gen.running; ui.go.disabled = gen.running;
+  ui.tabCode.setAttribute("aria-pressed", gen.tab==="code" ? "true" : "false"); ui.tabPrev.setAttribute("aria-pressed", gen.tab==="prev" ? "true" : "false");
+  ui.code.hidden = gen.tab !== "code"; ui.prevBox.hidden = gen.tab !== "prev";
+  if(gen.tab==="prev" && !gen.running) drawPreview();
+  if(gen.running && gen.tab==="code") ui.code.scrollTop = ui.code.scrollHeight;
+}
+async function runBuild(cont){
+  const sample = await getSample(); if(!sample) return;
+  const m = modelObj(), prompts = allPrompts(), p = prompts[Math.min(gen.sel, prompts.length-1)];
+  const brief = (htmlMode() ? BUILD_HTML : BUILD_MULTI) + p.text, base = cont ? gen.text : "";
+  const input = cont ? [{role:"user", content:brief}, {role:"assistant", content:base}, {role:"user", content:"Mach genau da weiter, wo du aufgehört hast. Gib nur den Rest aus, ohne etwas zu wiederholen, und schließe den Codeblock am Ende."}] : brief;
+  gen.ctl = new AbortController(); gen.running = true; gen.truncated = false;
+  if(!cont){ gen.text = ""; gen.tab = "code"; }
+  setStatus("Claude denkt nach …"); refreshBuild();
+  const apply = t => { gen.text = cont ? joinCont(base, t) : t; setStatus("Claude schreibt … " + fmt(gen.text.length) + " Zeichen"); refreshBuild(); };
+  try{
+    const res = await sample(input, {model:m.api, modelTier:m.tier, signal:gen.ctl.signal, cache:false, onText:({text}) => apply(text)});
+    apply(res.text); gen.truncated = !!res.truncated;
+    setStatus(gen.truncated ? "Abgeschnitten. Tippe auf „Weiter“." : "Fertig. " + fmt(gen.text.length) + " Zeichen.");
+    if(!gen.truncated && htmlMode() && /<!doctype html|<html/i.test(shownCode())) gen.tab = "prev";
+  } catch(e){
+    const code = e && e.code;
+    if(e && e.text) apply(e.text);
+    if(code==="cancelled"){ gen.truncated = !!gen.text; setStatus("Gestoppt." + (gen.text ? " Mit „Weiter“ geht es später weiter." : "")); }
+    else if(["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(code)) setStatus("Die Seite darf Claude nicht nutzen. Erlaube es in den Berechtigungen der Seite.");
+    else { gen.truncated = !!gen.text; setStatus(code==="rate_limited" ? "Limit erreicht. Warte etwas, dann „Weiter“ oder wähl ein anderes Modell." : "Hat nicht geklappt." + (gen.text ? " Tippe auf „Weiter“." : " Versuch es gleich noch mal.")); }
+  } finally { gen.running = false; refreshBuild(); }
+}
+function buildPanel(m){
+  const box = el("div","ai-box glass"); box.hidden = true;
+  box.appendChild(el("h3",null,"Direkt bauen mit " + m.name));
+  box.appendChild(el("p",null,"Claude erstellt " + art() + " " + what() + " jetzt hier, über dein Pro-Konto. Du brauchst keinen API-Key. Beim ersten Mal fragt dich die App, ob die Seite Claude nutzen darf."));
+  if(m.cost) box.appendChild(el("p","warn","Fable geht vom Nutzungsguthaben ab (grob 0,5–1,5 $, siehe Modellvergleich)."));
+  const prompts = allPrompts(); if(gen.sel >= prompts.length) gen.sel = 0;
+  const chips = el("div","chips");
+  prompts.forEach((p,i) => {
+    const c = el("button","chip",p.label); c.type = "button"; c.setAttribute("aria-pressed", i===gen.sel ? "true" : "false");
+    c.onclick = () => { gen.sel = i; chips.querySelectorAll(".chip").forEach((x,j) => x.setAttribute("aria-pressed", j===i ? "true" : "false")); };
+    chips.appendChild(c);
+  });
+  box.append(el("div","ql","Welchen Prompt bauen?"), chips);
+  const row = el("div","row"), go = el("button","btn coral","Erstellen"), cont = el("button","btn primary","Weiter"), stop = el("button","btn ghost","Stopp"), restart = el("button","btn ghost","Neu starten"), status = el("span","status","");
+  [go,cont,stop,restart].forEach(b => b.type = "button"); cont.hidden = true; stop.hidden = true;
+  row.append(go, cont, stop, restart, status); box.appendChild(row);
+  const tabs = el("div","row"), tabCode = el("button","chip","Code"), tabPrev = el("button","chip","Vorschau"), copy = el("button","btn primary small","Code kopieren");
+  [tabCode,tabPrev,copy].forEach(b => b.type = "button"); tabs.append(tabCode, tabPrev, copy); box.appendChild(tabs);
+  const code = el("pre","buildcode"); code.tabIndex = 0;
+  const prevBox = el("div"), note = el("p","unote","Vorschau gibt es nur für eine fertige HTML-Seite."), frame = el("iframe","prevframe");
+  frame.setAttribute("sandbox","allow-scripts"); frame.title = "Vorschau"; frame.hidden = true; prevBox.append(note, frame);
+  box.append(code, prevBox);
+  ui = {code, prevBox, note, frame, go, cont, stop, copy, status, tabCode, tabPrev};
+  go.onclick = () => runBuild(false); cont.onclick = () => runBuild(true); stop.onclick = () => gen.ctl && gen.ctl.abort();
+  tabCode.onclick = () => { gen.tab = "code"; refreshBuild(); }; tabPrev.onclick = () => { gen.tab = "prev"; refreshBuild(); };
+  copy.onclick = async () => {
+    try{ await navigator.clipboard.writeText(shownCode()); copy.textContent = "Kopiert ✓"; }
+    catch(e){ gen.tab = "code"; refreshBuild(); const r = document.createRange(); r.selectNodeContents(code); const s = getSelection(); s.removeAllRanges(); s.addRange(r); copy.textContent = "Markiert, jetzt kopieren"; }
+    setTimeout(() => { copy.textContent = "Code kopieren"; }, 2200);
+  };
+  let armed = false, tm = null;
+  restart.onclick = () => {
+    if(!armed){ armed = true; restart.textContent = "Wirklich alles löschen? Nochmal klicken"; clearTimeout(tm); tm = setTimeout(() => { armed = false; restart.textContent = "Neu starten"; }, 3500); return; }
+    if(gen.ctl) gen.ctl.abort(); gen = freshGen(); resetAll();
+  };
+  setStatus(gen.text ? "Letzter Bau ist noch da." : "");
+  refreshBuild();
+  getSample().then(s => { if(s) box.hidden = false; });
+  return box;
+}
+/* Modellvergleich (Preise: offizielle API-Preise pro Mio. Tokens, USD) */
+let drawCmpFn = null;
+const MW = {haiku:0.05, sonnet:1, opus:2}; /* Gewicht nach Preisverhältnis, grobe Annahme */
+function complexity(){
+  let s = A.staerke.val; const d = v("dreid");
+  if(d && d !== "Kein 3D") s += 1;
+  if(["app","game","dashboard"].includes(tk())) s += 1;
+  if(visible(byId.effekte) && A.effekte.sel.length >= 4) s += 1;
+  return s;
+}
+function recModel(){ const s = complexity(); return s >= 4 ? "opus" : s >= 2 ? "sonnet" : "haiku"; }
+function recReason(){
+  const b = [], d = v("dreid");
+  if(A.staerke.val >= 3) b.push("viel Animation");
+  if(d && d !== "Kein 3D") b.push("3D");
+  if(["app","game","dashboard"].includes(tk())) b.push(what());
+  if(visible(byId.effekte) && A.effekte.sel.length >= 4) b.push("viele Effekte");
+  return b.length ? "Weil: " + b.join(", ") + "." : "Dein Projekt ist eher einfach, da reicht ein schnelles Modell.";
+}
+function money(x){ return (x < 0.001 ? "<0,001" : x.toLocaleString("de-DE", {minimumFractionDigits:2, maximumFractionDigits: x < 0.1 ? 3 : 2})) + " $"; }
+function pct2(x){ x = Math.min(100, x); return x.toLocaleString("de-DE", {maximumFractionDigits: x < 1 ? 2 : x < 10 ? 1 : 0}); }
+function modelCompare(){
+  const wrap = el("div","cmpwrap");
+  wrap.appendChild(el("h4",null,"Vergleich für deinen Prompt"));
+  let tot = 0; for(let s = 1; s <= 12; s++) tot += approxTokens(buildPrompt(s));
+  const inTok = Math.round(tot/12), outTok = Math.round((USAGE.out[tk()] || 12000) * (0.7 + 0.15 * A.staerke.val));
+  const rec = recModel(), sel = modelObj().id;
+  const sc = el("div","tblscroll"), t = el("table","mt"), head = el("tr");
+  ["Modell","Preis pro 1 Mio. Tokens","Dieser Prompt, bei Kauf","5-Stunden-Limit (Pro)","Wochenlimit (Pro)"].forEach(h => head.appendChild(el("th",null,h)));
+  t.appendChild(head);
+  MODELS.forEach(m => {
+    const tr = el("tr", m.id===sel ? "sel" : null), c1 = el("td");
+    c1.appendChild(el("b",null,m.name)); if(m.id===rec) c1.appendChild(el("span","rec","Empfohlen"));
+    c1.appendChild(el("small",null, m.cost ? "Nur über Guthaben" : "Im Pro-Plan drin"));
+    const c2 = el("td"); c2.appendChild(el("b",null,"$" + m.pin.toLocaleString("de-DE") + " / $" + m.pout.toLocaleString("de-DE"))); c2.appendChild(el("small",null,"rein / raus"));
+    const usd = (inTok*m.pin + outTok*m.pout)/1e6, c3 = el("td"); c3.appendChild(el("b",null,"ca. " + money(usd*0.6) + " – " + money(usd*1.6)));
+    let c4, c5;
+    if(m.cost){ c4 = el("td",null,"zählt nicht"); c5 = el("td",null,"zählt nicht"); }
+    else {
+      const s = (inTok + 5*outTok) * MW[m.id] / USAGE.session * 100, w = s / USAGE.weekFactor;
+      c4 = el("td"); c4.appendChild(el("b",null,"ca. " + pct2(s*USAGE.low) + "–" + pct2(s*USAGE.high) + " %"));
+      c5 = el("td"); c5.appendChild(el("b",null,"ca. " + pct2(w*USAGE.low) + "–" + pct2(w*USAGE.high) + " %"));
+    }
+    tr.append(c1,c2,c3,c4,c5); t.appendChild(tr);
+  });
+  sc.appendChild(t); wrap.appendChild(sc);
+  const rm = MODELS.find(x => x.id===rec);
+  wrap.appendChild(el("p","unote","Empfehlung für deine Angaben: " + rm.name + ". " + recReason() + (rec==="opus" ? " Fable lohnt sich nur, wenn Opus nicht reicht, und kostet etwa das 2,5-Fache." : "")));
+  wrap.appendChild(el("p","unote","Preise: offizielle API-Preise in US-Dollar pro Million Tokens. Der Prompt hat ca. " + fmt(inTok) + " Tokens, für die Antwort rechne ich mit ca. " + fmt(outTok) + " (Geschätzt, die echte Zahl schwankt). Die Prozentwerte für die Pro-Limits sind eine grobe Schätzung, weil Anthropic keine festen Limits nennt. Alle Varianten sind ähnlich lang."));
+  return wrap;
+}
+function variantCard(seed, idx, best){
+  const text = buildPrompt(seed), pick = decode(seed);
+  const c = el("section","variant glass"), h = el("div","vh"), left = el("div");
+  const h3 = el("h3",null,"Variante #" + fmt(seed)); if(best){ h3.appendChild(el("span","best","Empfohlen")); }
+  left.appendChild(h3);
+  const facts = el("div","facts");
+  [pick.dir && "Richtung: " + pick.dir, pick.wow && "Wow: " + pick.wow, "Fokus: " + pick.emph[0]].filter(Boolean).forEach(x => facts.appendChild(el("span","pill",x)));
+  left.appendChild(facts);
+  const right = el("div","row"); right.appendChild(el("span","meta","≈ " + fmt(approxTokens(text)) + " Tokens"));
+  const re = el("button","btn ghost small","Neu würfeln"); re.type = "button";
+  re.onclick = () => { seeds[idx] = randSeed(); save(); c.replaceWith(variantCard(seeds[idx], idx, best)); };
+  right.append(re, copyBtn(() => text));
+  h.append(left, right); c.appendChild(h);
+  const pre = el("pre",null,text); pre.tabIndex = 0; c.appendChild(pre);
+  return c;
+}
+function aiCard(r){
+  const c = el("section","variant glass"), h = el("div","vh"), left = el("div");
+  left.append(el("h3",null,r.titel), el("p","why",r.wofuer));
+  const right = el("div","row"); right.append(el("span","meta","≈ " + fmt(approxTokens(r.prompt)) + " Tokens"), copyBtn(() => r.prompt));
+  h.append(left, right); c.appendChild(h);
+  const pre = el("pre",null,r.prompt); pre.tabIndex = 0; c.appendChild(pre); return c;
+}
+let samplePromise = null;
+function getSample(){ if(!samplePromise) samplePromise = (window.claude && window.claude.use) ? window.claude.use("sample").catch(()=>null) : Promise.resolve(null); return samplePromise; }
+
+function renderResults(){
+  const m = modelObj(), out = el("div","out"), n = +setv("set_anzahl");
+  const T = totalVariants();
+  seeds = seeds.filter(s => s>=1 && s<=T).slice(0, n);
+  while(seeds.length < n) seeds.push(randSeed());
+  save();
+
+  if(!typeObj()){ const tp = el("div","tips glass"); tp.append(el("h3",null,"Tipp"), el("p",null,"Du hast noch keine Projektart gewählt. Unter „Start“ auswählen, dann werden die Prompts viel genauer.")); out.appendChild(tp); }
+
+  const tb = el("div","toolbar glass");
+  const big = el("div","big"); big.append(el("span",null,fmt(T)), " mögliche Varianten");
+  tb.appendChild(big);
+  tb.appendChild(el("p","status","Mit deinen Antworten und Einstellungen. Jede Variante hat eine Nummer, mit der du sie jederzeit wiederfindest."));
+  const pills = el("div","pills");
+  ["Modell: " + m.name, "Länge: " + detail(), "Format: " + setv("set_format"), "Kreativität: " + creative(), "Varianten: " + n].forEach(x => pills.appendChild(el("span","pill",x)));
+  tb.appendChild(pills);
+  const row = el("div","row");
+  const all = el("button","btn coral","Alle neu würfeln"); all.type = "button";
+  all.onclick = () => { seeds = seeds.map(() => randSeed()); save(); render(); };
+  const num = el("input"); num.type = "number"; num.min = 1; num.max = T; num.id = "seedInput"; num.placeholder = "Variante Nr.";
+  num.setAttribute("aria-label","Variantennummer");
+  const ld = el("button","btn ghost","Laden"); ld.type = "button";
+  ld.onclick = () => { const x = Math.floor(+num.value); if(x>=1 && x<=T){ seeds[0] = x; save(); render(); } else { num.value = ""; num.placeholder = "1 bis " + fmt(T); } };
+  const sett = el("button","btn ghost","Einstellungen ändern"); sett.type = "button"; sett.onclick = () => go(SECTIONS.findIndex(s=>s.id==="einstellungen"));
+  row.append(all, num, ld, sett); tb.appendChild(row);
+  out.appendChild(tb);
+
+  seeds.forEach((s,i) => out.appendChild(variantCard(s, i, i===0)));
+
+  // Claude schreibt eigene Varianten
+  const box = el("div","ai-box glass"); box.hidden = true;
+  box.appendChild(el("h3",null,"Von Claude schreiben lassen"));
+  box.appendChild(el("p",null,"Claude (" + m.name + ") liest deine Antworten und schreibt drei komplett eigene Prompts, mit eigenen Ideen ergänzt."));
+  if(m.cost) box.appendChild(el("p","warn","Achtung: Fable kostet beim Pro-Plan Nutzungsguthaben, auch für diesen Klick. Mit Opus oder Sonnet ist es im Plan drin."));
+  const r2 = el("div","row"), goAi = el("button","btn primary","3 Prompts mit " + m.name + " schreiben"), stop = el("button","btn ghost","Stopp"), st = el("span","status","");
+  goAi.type = "button"; stop.type = "button"; stop.hidden = true; r2.append(goAi, stop, st); box.appendChild(r2);
+  const aiOut = el("div","out"); box.appendChild(aiOut);
+  aiResults.forEach(r => aiOut.appendChild(aiCard(r)));
+  out.appendChild(box);
+  getSample().then(s => { if(s) box.hidden = false; });
+  let ctl = null;
+  stop.onclick = () => ctl && ctl.abort();
+  goAi.onclick = async () => {
+    const sample = await getSample(); if(!sample){ box.hidden = true; return; }
+    ctl = new AbortController(); goAi.disabled = true; stop.hidden = false; st.textContent = "Claude denkt nach …";
+    const input = [
+      "Du bist ein sehr guter Prompt-Engineer. Jemand möchte mit Claude " + m.name + " " + art() + " " + what() + " bauen lassen.",
+      "Hier sind seine Antworten aus einem ausführlichen Fragebogen, als Entwurf zusammengefasst:",
+      "<<<", buildPrompt(seeds[0]), ">>>",
+      "Schreibe daraus 3 deutlich unterschiedliche, sehr ausführliche, sofort nutzbare Prompts auf Deutsch für einen neuen Chat mit " + m.name + ":",
+      "1. „Profi-Komplettprompt“: alles in einem Schuss, perfekt strukturiert, präzise technische Vorgaben, Checkliste.",
+      "2. „Kreativ-Version“: mit einer eigenen, starken Designidee und einem Wow-Moment, passend zu Marke und Zielgruppe, ohne den Wünschen zu widersprechen.",
+      "3. „Sicher & sparsam“: so formuliert, dass das Modell mit möglichst wenigen Korrekturrunden ein fehlerfreies Ergebnis liefert.",
+      "Behalte alle Wünsche, Muss-Punkte und No-Gos bei. Keine echten Markenlogos, keine erfundenen Bewertungen.",
+      "Antworte NUR mit einem JSON-Array aus 3 Objekten: [{\"titel\":\"…\",\"wofuer\":\"ein Satz, wann man diese Variante nimmt\",\"prompt\":\"der komplette Prompt\"}]"
+    ].join("\n");
+    try{
+      const res = await sample.json(input, {model:m.api, modelTier:m.tier, signal:ctl.signal, cache:false,
+        onText: ({text}) => { st.textContent = "Claude schreibt … " + fmt(text.length) + " Zeichen"; }});
+      const arr = (Array.isArray(res) ? res : []).filter(x => x && typeof x.prompt==="string").map(x => ({titel:String(x.titel||"Claude-Variante"), wofuer:String(x.wofuer||""), prompt:x.prompt}));
+      if(!arr.length) st.textContent = "Die Antwort war leer. Versuch es noch mal.";
+      else { aiResults = arr; aiOut.innerHTML = ""; arr.forEach(r => aiOut.appendChild(aiCard(r))); st.textContent = "Fertig: " + arr.length + " neue Prompts."; }
+    } catch(e){
+      const code = e && e.code;
+      if(code==="cancelled") st.textContent = "Gestoppt.";
+      else if(["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(code)) box.hidden = true;
+      else if(code==="rate_limited") st.textContent = "Limit erreicht. Warte etwas oder wähl ein anderes Modell.";
+      else if(code==="invalid_json") st.textContent = "Die Antwort kam im falschen Format. Klick noch mal.";
+      else if(code==="refused") st.textContent = "Claude hat abgelehnt. Formuliere deine Antworten anders.";
+      else st.textContent = "Hat nicht geklappt. Versuch es gleich noch mal.";
+    } finally { goAi.disabled = false; stop.hidden = true; }
+  };
+
+  out.appendChild(buildPanel(m));
+  const tips = el("div","tips glass");
+  tips.appendChild(el("h3",null,"So nutzt du die Prompts"));
+  const ul = el("ul");
+  ["Öffne einen NEUEN Chat auf claude.ai und wähl dort " + m.name + " aus.",
+   "Prompt kopieren, einfügen, abschicken. Keine Dateien anhängen, wenn du sparen willst.",
+   "Platzhalter wie [NAME] vorher ersetzen.",
+   "Bricht die Antwort ab, schreib nur: „Mach genau da weiter, wo du aufgehört hast.“",
+   m.cost ? "Kleine Änderungen danach lieber mit Opus oder Sonnet machen, das kostet kein Guthaben." : "Kleine Änderungen danach einfach im selben Chat sagen."
+  ].forEach(t => ul.appendChild(el("li",null,t)));
+  tips.appendChild(ul); out.appendChild(tips);
+  elMain.appendChild(out);
+}
+
+/* ================= Beispiel ================= */
+const EXAMPLE = {
+  typ:{sel:["Web-App / Tool"]}, name:{text:"Resellerforless"},
+  pitch:{text:"Foto machen, ein paar Fragen beantworten, fairen Verkaufspreis und fertigen Anzeigentext bekommen."},
+  idee:{text:"Wir sind ein paar Freunde, die auf eBay und Kleinanzeigen günstig kaufen und teurer weiterverkaufen. Mit Resellerforless kann jeder ein Foto von etwas Gebrauchtem machen, ein paar Fragen beantworten und bekommt einen passenden Verkaufspreis plus fertigen Anzeigentext für Kleinanzeigen oder eBay."},
+  ziel:{sel:["Werkzeug zum Benutzen","Marke aufbauen"]}, zielgruppe:{sel:["Jugendliche","Junge Erwachsene"], own:"Leute, die gebrauchte Sachen verkaufen wollen"},
+  nutzer_wissen:{sel:["Normal"]}, branche:{text:"Reselling / Second-Hand"}, ort:{text:"Forchtenberg (Hohenlohe)"},
+  ton:{sel:["Locker & frech"]}, sprache:{sel:["Deutsch"]}, anrede:{sel:["Du"]},
+  nav:{sel:["Schwebende Pille (Glas)"]}, mobilmenu:{sel:["Leiste unten"]},
+  wa_funktion:{text:"Aus einem Foto und ein paar Antworten einen fairen Verkaufspreis und einen fertigen Anzeigentext erstellen"},
+  wa_ablauf:{text:"Foto hochladen oder mit der Kamera machen\nFragen beantworten (Zustand, Marke, Alter, Zubehör)\nPreisvorschlag mit Spanne sehen\nAnzeigentext für Kleinanzeigen und eBay kopieren"},
+  wa_screens:{sel:["Start","Eingabe / Upload","Ergebnis","Verlauf"]}, wa_eingabe:{sel:["Foto-Upload","Kamera","Formular mit Fragen"]},
+  wa_ausgabe:{sel:["Karte","Text zum Kopieren"]}, wa_ki:{sel:["Ja – Claude API"]}, wa_speichern:{sel:["Im Browser"]}, wa_konto:{sel:["Nein"]}, wa_zustaende:{sel:["Ja"]},
+  funktionen:{sel:["Kopieren-Button","Teilen-Link","Verlauf"]}, material:{sel:["Bitte passende Texte schreiben"]},
+  headline:{text:"Foto rein. Preis raus."}, cta:{text:"Jetzt Preis checken"}, social:{sel:["Instagram","TikTok"]},
+  stil:{sel:["Glas-Look","Futuristisch"]}, modus:{sel:["Hell"]}, hauptfarbe:{sel:["Weiß","Hellblau"]}, akzent:{sel:["Orange"]},
+  harmonie:{sel:["Neutral + ein Akzent"]}, hintergrund:{sel:["Mesh-Verlauf"]}, textur:{sel:["Glas-Blur","Körnung (Grain)"]},
+  schrift:{sel:["Geometrisch"]}, schrift_paar:{sel:["Display + Text"]}, ueberschrift:{sel:["Riesig"]}, ecken:{sel:["Sehr rund / Pillen"]},
+  schatten:{sel:["Weich"]}, abstand:{sel:["Sehr luftig"]}, buttons:{sel:["Glas"]}, karten:{sel:["Glas"]}, icons:{sel:["Linien"]},
+  bilder:{sel:["3D statt Bilder"]}, logo:{sel:["Nur der Name als Text"]}, gefuehl:{text:"leicht, schnell, frech"},
+  staerke:{val:3}, tempo:{sel:["Normal"]}, easing:{sel:["Federnd"]}, effekte:{sel:["Einblenden beim Scrollen","Zahlen zählen hoch","Konfetti bei Erfolg"]},
+  text_anim:{sel:["Wort für Wort"]}, hover:{sel:["Anheben","Glanz-Reflex"]}, uebergang:{sel:["Geteilte Elemente (Morph)"]},
+  dreid:{sel:["Ein Hauptobjekt"]}, objekt3d:{text:"Ein schwebendes Preisschild aus Glas, das sich langsam dreht und auf die Maus reagiert"},
+  dreid_stil:{sel:["Glas / Kristall"]}, licht:{sel:["Hell wie im Studio"]}, kamera:{sel:["Folgt der Maus"]}, partikel:{sel:["Schwebende Formen"]},
+  interaktion:{sel:["Reagiert auf die Maus","Reagiert auf Touch / Handy-Neigung"]}, mobil_anim:{sel:["Abgespeckt"]}, reduced:{sel:["Ja, dann Animationen reduzieren"]},
+  tech:{sel:["Eine einzige HTML-Datei"]}, libs:{sel:["Three.js","GSAP + ScrollTrigger"]}, codesprache:{sel:["JavaScript"]},
+  geraete:{sel:["Handy","Laptop / PC"]}, prio:{sel:["Handy zuerst"]}, backend:{sel:["Weiß ich nicht"]}, barriere:{sel:["Ja"]},
+  erfahrung:{sel:["Anfänger"]}, lieferung:{sel:["Alles in einem Stück"]}, rueckfragen:{sel:["Nein, selbst entscheiden"]}, dateien:{sel:["Möglichst eine Datei"]},
+  kommentare:{sel:["Deutsch"]}, erklaerung:{sel:["Kurze Anleitung"]}, anpassbar:{sel:["Farben als Variablen","Texte"]}, pruefen:{sel:["Ja"]},
+  ideen:{sel:["Ja, 3 Ideen"]}, nogo:{text:"Keine echten Markenlogos\nKeine erfundenen Bewertungen"},
+  modell:{sel:["fable"]}, __touched:{staerke:true}
+};
+
+/* ================= Start ================= */
+const saved = load();
+if(saved && saved.A){ initState(saved.A); cur = Math.min(saved.cur||0, SECTIONS.length-1); seeds = Array.isArray(saved.seeds) ? saved.seeds : []; }
+else { initState(null); }
+function resetAll(){ initState(null); aiResults = []; seeds = []; document.getElementById("exampleBanner").hidden = true; cur = 0; save(); render(); }
+document.getElementById("clearBtn").onclick = resetAll;
+const rb = document.getElementById("resetBtn"); let rbT = null;
+rb.onclick = () => {
+  if(rb.dataset.armed !== "1"){ rb.dataset.armed = "1"; rb.textContent = "Wirklich alles löschen? Nochmal klicken"; clearTimeout(rbT); rbT = setTimeout(() => { rb.dataset.armed = "0"; rb.textContent = "Alles neu beginnen"; }, 3500); return; }
+  clearTimeout(rbT); rb.dataset.armed = "0"; rb.textContent = "Alles neu beginnen"; resetAll();
+};
+render();
+initIntro();
+
+function howCard(){
+  const d = el("details","how glass"); d.open = true;
+  d.appendChild(el("summary",null,"So funktioniert's (kurz erklärt)"));
+  const ol = el("ol");
+  ["Wähl zuerst, was du baust: Website, App, Dashboard, Spiel … Danach passen sich die Fragen an.",
+   "Beantworte die Fragen und schreib in eigenen Worten dazu, was du willst. Leere Felder sind okay.",
+   "Wähl dein Claude-Modell und stell bei Bedarf den Generator ein (Länge, Format, Kreativität).",
+   "Kopier den fertigen Prompt in einen neuen Chat oder lass Claude die Seite direkt hier bauen."].forEach(t => ol.appendChild(el("li",null,t)));
+  d.appendChild(ol);
+  d.appendChild(el("p","unote","Dauer: etwa 5 bis 10 Minuten. Deine Antworten bleiben auf diesem Gerät gespeichert."));
+  return d;
+}
+
+/* ================= Intro: Ladebildschirm mit 3D-Glaswürfel ================= */
+function initIntro(){
+  const root = document.getElementById("intro"); if(!root) return;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fill = document.getElementById("introFill"), pct = document.getElementById("introPct"), msg = document.getElementById("introMsg"), orb = document.getElementById("introOrb");
+  const msgs = ["Ofen wird angeheizt …","Fragen werden poliert …","Funken sammeln …","Fast fertig …"];
+  let finished = false, raf = 0, renderer = null, step = null, last = 0;
+  const DURATION = reduce ? 800 : 3200, t0 = performance.now();
+  function finish(){
+    if(finished) return; finished = true; cancelAnimationFrame(raf); root.classList.add("done");
+    setTimeout(() => { try{ if(renderer) renderer.dispose(); }catch(e){} root.remove(); }, 800);
+  }
+  document.getElementById("introSkip").onclick = finish;
+  const easeOutBack = x => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3*Math.pow(x-1,3) + c1*Math.pow(x-1,2); };
+
+  function setupScene(){
+    const canvas = document.getElementById("introCanvas");
+    renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); renderer.setClearColor(0x000000, 0);
+    const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(35, 1, 0.1, 60);
+    /* Umgebung für die Spiegelungen im Glas */
+    const env = new THREE.Scene(), sph = new THREE.Mesh(new THREE.SphereGeometry(20,32,16), new THREE.MeshBasicMaterial({side:THREE.BackSide, vertexColors:true}));
+    const pos = sph.geometry.attributes.position, col = [];
+    for(let i=0;i<pos.count;i++){ const y = pos.getY(i)/20, c = new THREE.Color(0xffd9c7).lerp(new THREE.Color(0xcfe0ff), (y+1)/2); col.push(c.r,c.g,c.b); }
+    sph.geometry.setAttribute("color", new THREE.Float32BufferAttribute(col,3)); env.add(sph);
+    [[6,8,4,6],[-8,2,-3,4],[0,-6,8,5]].forEach(([x,y,z,sz]) => { const m = new THREE.Mesh(new THREE.BoxGeometry(sz,sz*0.3,0.3), new THREE.MeshBasicMaterial({color:0xffffff})); m.position.set(x,y,z); m.lookAt(0,0,0); env.add(m); });
+    const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(env, 0.03).texture; pm.dispose();
+    /* Glaswürfel mit glühendem Kern */
+    const group = new THREE.Group(); scene.add(group);
+    const cube = new THREE.Mesh(new THREE.BoxGeometry(1.7,1.7,1.7), new THREE.MeshPhysicalMaterial({color:0xffffff, metalness:0, roughness:0.05, transmission:1, thickness:1.5, ior:1.5, clearcoat:1, clearcoatRoughness:0.05, envMapIntensity:1.6, attenuationColor:new THREE.Color(0xa7c3ff), attenuationDistance:3}));
+    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(cube.geometry), new THREE.LineBasicMaterial({color:0xff6a3d}));
+    const core = new THREE.Mesh(new THREE.IcosahedronGeometry(0.42,1), new THREE.MeshStandardMaterial({color:0xff6a3d, emissive:0xff6a3d, emissiveIntensity:1.8, roughness:0.35, flatShading:true}));
+    const light = new THREE.PointLight(0xff8a5c, 2, 9); group.add(cube, edges, core, light);
+    /* Funken */
+    const small = Math.min(innerWidth, innerHeight) < 600;
+    function sparks(n, color, size){
+      const g = new THREE.BufferGeometry(), arr = new Float32Array(n*3), d = [];
+      for(let i=0;i<n;i++){ d.push({a:Math.random()*Math.PI*2, r:1.4+Math.random()*2.2, y:(Math.random()-0.5)*4.4, s:0.25+Math.random()*0.7}); }
+      g.setAttribute("position", new THREE.BufferAttribute(arr,3));
+      const pts = new THREE.Points(g, new THREE.PointsMaterial({color, size, transparent:true, opacity:.95, depthWrite:false}));
+      scene.add(pts); return {g, arr, d};
+    }
+    const sets = [sparks(small?120:240, 0xff6a3d, 0.07), sparks(small?60:120, 0x2446ff, 0.05)];
+    let px = 0, py = 0;
+    addEventListener("pointermove", e => { px = e.clientX/innerWidth*2-1; py = e.clientY/innerHeight*2-1; });
+    function resize(){
+      if(finished) return;
+      const w = root.clientWidth, h = root.clientHeight; renderer.setSize(w,h,false);
+      camera.aspect = w/h; camera.position.set(0,0.2, w/h < 0.8 ? 11.5 : 8.5); camera.lookAt(0,-0.7,0); camera.updateProjectionMatrix();
+    }
+    resize(); addEventListener("resize", resize);
+    return (t, dt) => {
+      const grow = t < 0.3 ? easeOutBack(t/0.3) : 1, burst = t > 0.82 ? Math.pow((t-0.82)/0.18, 2) : 0;
+      group.scale.setScalar(Math.max(0.001, grow*(1 + burst*0.7)));
+      group.rotation.y += dt*(0.9 + t*2.6); group.rotation.x = Math.sin(t*5)*0.25 + py*0.3;
+      group.position.x += (px*0.4 - group.position.x)*0.05;
+      core.rotation.y -= dt*2; core.scale.setScalar(1 + Math.sin(t*20)*0.08 + burst*0.8);
+      core.material.emissiveIntensity = 1.6 + Math.sin(t*14)*0.5 + burst*3; light.intensity = 1.6 + Math.sin(t*14)*0.6 + burst*4;
+      sets.forEach(S => {
+        for(let i=0;i<S.d.length;i++){
+          const q = S.d[i]; q.a += dt*q.s*(1 + burst*3); q.y += dt*q.s*0.9; if(q.y > 2.4) q.y = -2.4;
+          const rr = q.r*(1 + burst*2.2); S.arr[i*3] = Math.cos(q.a)*rr; S.arr[i*3+1] = q.y; S.arr[i*3+2] = Math.sin(q.a)*rr;
+        }
+        S.g.attributes.position.needsUpdate = true;
+      });
+      renderer.render(scene, camera);
+    };
+  }
+  try{ if(!reduce && window.THREE) step = setupScene(); }catch(e){ step = null; }
+  if(!step){ document.getElementById("introCanvas").hidden = true; if(!reduce) orb.hidden = false; }
+  function tick(now){
+    if(finished) return;
+    const t = Math.min(1, (now - t0)/DURATION), dt = Math.min(0.05, (now - (last || now))/1000); last = now;
+    const p = 1 - Math.pow(1 - t, 2.2);
+    if(step){ try{ step(t, dt); }catch(e){ step = null; } }
+    fill.style.width = (p*100) + "%"; pct.textContent = Math.round(p*100) + " %"; msg.textContent = msgs[Math.min(msgs.length-1, Math.floor(p*msgs.length))];
+    if(t >= 1){ finish(); return; }
+    raf = requestAnimationFrame(tick);
+  }
+  raf = requestAnimationFrame(tick);
+}
+</script>
+<div class="ver">V.14</div>
