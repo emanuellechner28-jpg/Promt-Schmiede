@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#000000">
 </head>
 <body>
-<title>Prompt-Schmiede V.17.6</title>
+<title>Prompt-Schmiede V.17.7</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: iOS-Look wie der Token-Rechner – schwarzer Grund, gruppierte Karten, blaue Akzente, fixe Leiste unten */
@@ -1040,15 +1040,29 @@ function el(tag, cls, txt){ const e = document.createElement(tag); if(cls) e.cla
 function secSub(s){ if(s.id==="projekt" && selfUse()) return "Wofür du es nutzt, wo und wie. Ohne Marken-Fragen."; if(s.id==="projekt" && brandUse()) return "Ziel, Zielgruppe, Markenwerte und Tonalität."; return s.sub; }
 function secTitle(s){ if(s.id==="projekt" && selfUse()) return "Wofür ist es?"; if(s.id==="projekt" && brandUse()) return "Marke & Ziel"; if(s.id==="aufbau"){ const t = typeObj(); return t ? "Aufbau: " + t.l : "Aufbau"; } return s.title; }
 function render(){
-  const y = window.pageYOffset, c = cur, h = document.documentElement.style.minHeight;
-  document.documentElement.style.minHeight = (document.documentElement.scrollHeight) + "px";
+  const y = window.pageYOffset, c = cur;
+  const sl = elSt.scrollLeft, st = elSt.scrollTop;
+  elMain.style.minHeight = elMain.offsetHeight + "px";
+  elSt.style.minHeight = elSt.offsetHeight + "px"; elSt.style.minWidth = elSt.offsetWidth + "px";
   _renderInner();
-  if(c === _lastCur){ window.scrollTo(0, y); }
+  const same = (c === _lastCur);
   _lastCur = cur;
-  requestAnimationFrame(() => { document.documentElement.style.minHeight = h; if(c === _lastCur) window.scrollTo(0, y); });
+  if(same){ elSt.scrollLeft = sl; elSt.scrollTop = st; window.scrollTo(0, y); }
+  requestAnimationFrame(() => {
+    if(same) window.scrollTo(0, y);
+    elMain.style.minHeight = ""; elSt.style.minHeight = ""; elSt.style.minWidth = "";
+    if(same){ elSt.scrollLeft = sl; elSt.scrollTop = st; window.scrollTo(0, y); }
+  });
 }
 let _lastCur = -1;
 function renderStations(){
+  const _sl = elSt.scrollLeft, _st = elSt.scrollTop, _h = elSt.offsetHeight, _w = elSt.offsetWidth;
+  elSt.style.minHeight = _h + "px"; elSt.style.minWidth = _w + "px";
+  _renderStationsInner();
+  elSt.scrollLeft = _sl; elSt.scrollTop = _st;
+  elSt.style.minHeight = ""; elSt.style.minWidth = "";
+}
+function _renderStationsInner(){
   elSt.innerHTML = "";
   SECTIONS.forEach((s,i) => {
     const qs = Q.filter(q => q.s===s.id && visible(q) && !q.setting), done = qs.filter(isFilled).length;
@@ -2200,7 +2214,7 @@ function initIntro(){
   raf = requestAnimationFrame(tick);
 }
 </script>
-<div class="ver">V.17.6</div>
+<div class="ver">V.17.7</div>
 
 </body>
 </html>
