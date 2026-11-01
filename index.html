@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#000000">
 </head>
 <body>
-<title>Prompt-Schmiede V.17.1</title>
+<title>Prompt-Schmiede V.17.2</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: iOS-Look wie der Token-Rechner – schwarzer Grund, gruppierte Karten, blaue Akzente, fixe Leiste unten */
@@ -280,6 +280,31 @@ details.gl b{color:var(--ink);font-weight:600}
   .station .ct{display:none}
   .meter{max-width:none}
 }
+
+/* Ansicht umschalten */
+header.top{position:relative}
+.brand{padding-right:52px}
+.viewbtn{position:absolute;right:0;top:calc(env(safe-area-inset-top,0px) + 18px);width:38px;height:38px;border:0;border-radius:19px;background:var(--fill);color:var(--tint);display:grid;place-items:center;cursor:pointer;padding:0}
+.viewbtn svg{width:21px;height:21px}
+.vopts{display:flex;flex-direction:column;border-radius:14px;overflow:hidden;background:var(--fill)}
+.vopt{display:flex;justify-content:space-between;align-items:center;gap:12px;border:0;background:none;color:var(--ink);text-align:left;padding:13px 16px;font-size:17px;cursor:pointer;position:relative;min-height:52px}
+.vopt+.vopt::before{content:"";position:absolute;top:0;left:16px;right:0;border-top:.5px solid var(--sep)}
+.vopt small{display:block;color:var(--mute);font-size:13px;margin-top:2px}
+.vopt .ck{color:var(--tint);font-weight:700;font-size:18px;visibility:hidden}
+.vopt[aria-checked="true"] .ck{visibility:visible}
+html.vm-mobile .wrap{max-width:480px}
+html.vm-mobile .grid{grid-template-columns:minmax(0,1fr);gap:14px}
+html.vm-mobile nav.stations{position:static;flex-direction:row;overflow-x:auto;gap:8px;padding:2px 16px;background:none!important;border-radius:0;scrollbar-width:none;margin:0 -16px}
+html.vm-mobile nav.stations::-webkit-scrollbar{display:none}
+html.vm-mobile .station{width:auto;flex:none;padding:0 14px 0 6px;min-height:36px;border-radius:18px;background:var(--fill);gap:8px}
+html.vm-mobile .station[aria-current="step"]{background:var(--tint)}
+html.vm-mobile .station+.station::before{display:none}
+html.vm-mobile .station .no{width:24px;height:24px;border-radius:12px;background:rgba(255,255,255,.08)}
+html.vm-mobile .station .nm{font-size:15px;font-weight:500}
+html.vm-mobile .station .ct{display:none}
+html.vm-mobile .meter{max-width:none}
+html.vm-mobile .pager{padding-left:max(16px,calc((100vw - 480px)/2));padding-right:max(16px,calc((100vw - 480px)/2))}
+html.vm-desktop body{min-width:1100px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -296,6 +321,7 @@ details.gl b{color:var(--ink);font-weight:600}
 </div>
 <div class="wrap">
   <header class="top">
+    <button class="viewbtn" id="viewBtn" type="button" aria-label="Einstellungen: Ansicht"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
     <div class="brand">
       <div class="mark">Prompt-Generator · Claude · ChatGPT · Grok · Gemini</div>
       <h1>Prompt-<em>Schmiede</em></h1>
@@ -335,6 +361,17 @@ details.gl b{color:var(--ink);font-weight:600}
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 <script>
+/* Ansicht: automatisch, Handy oder Desktop (vor allem anderen setzen) */
+const VKEY = "prompt-schmiede-view";
+function getView(){ try{ return localStorage.getItem(VKEY) || "auto"; }catch(e){ return "auto"; } }
+function applyView(){
+  const v = getView(), h = document.documentElement;
+  let meta = document.querySelector('meta[name="viewport"]');
+  if(!meta){ meta = document.createElement("meta"); meta.name = "viewport"; document.head.appendChild(meta); }
+  meta.content = v==="desktop" ? "width=1180" : "width=device-width, initial-scale=1, viewport-fit=cover";
+  h.classList.toggle("vm-mobile", v==="mobile"); h.classList.toggle("vm-desktop", v==="desktop");
+}
+applyView();
 /* ================= Projektarten ================= */
 const TYPES = [
   {k:"web", l:"Website", art:"eine"}, {k:"landing", l:"Landingpage", art:"eine"}, {k:"shop", l:"Online-Shop", art:"einen"},
@@ -1997,7 +2034,23 @@ function showExport(){
   wrap.append(ta, r4, st);
   openSheet("Export", "Prompts und Projekte sichern oder laden. In der Claude-Ansicht können Downloads blockiert sein, dann hilft Kopieren.", wrap);
 }
+
+function showView(){
+  const wrap = el("div"), list = el("div","vopts"), cur = getView();
+  [["auto","Automatisch","Passt sich an das Gerät an."],["mobile","Handy","Eine Spalte, große Knöpfe, Leiste unten."],["desktop","Desktop","Breite Ansicht mit Liste links, wie am PC."]].forEach(([k,t,d]) => {
+    const b = el("button","vopt"); b.type = "button"; b.setAttribute("role","radio"); b.setAttribute("aria-checked", k===cur ? "true" : "false");
+    const tx = el("span"); tx.append(t); tx.appendChild(el("small",null,d));
+    b.append(tx, el("span","ck","✓"));
+    b.onclick = () => { try{ localStorage.setItem(VKEY, k); }catch(e){} applyView(); closeSheet(); window.scrollTo(0,0); };
+    list.appendChild(b);
+  });
+  wrap.appendChild(list);
+  wrap.appendChild(el("p","unote","Wird auf diesem Gerät gespeichert. Sieht die Seite winzig aus, wähl „Handy“."));
+  wrap.lastChild.style.marginTop = "12px";
+  openSheet("Ansicht", "Wie soll die Prompt-Schmiede angezeigt werden?", wrap);
+}
 function wireTools(){
+  document.getElementById("viewBtn").onclick = showView;
   document.getElementById("tProj").onclick = showProjects;
   document.getElementById("tTpl").onclick = showTemplates;
   document.getElementById("tImp").onclick = showImprover;
@@ -2119,7 +2172,7 @@ function initIntro(){
   raf = requestAnimationFrame(tick);
 }
 </script>
-<div class="ver">V.17.1</div>
+<div class="ver">V.17.2</div>
 
 </body>
 </html>
